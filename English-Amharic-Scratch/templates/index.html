@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>የቋንቋ ትምህርት — Learn Amharic & English 🇪🇹</title>
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Tokens — Ethiopian flag palette extended ── */
+:root {
+  --et-green:   #078930;
+  --et-yellow:  #FCDD09;
+  --et-red:     #DA121A;
+  --et-blue:    #0F47AF;   /* star on the flag */
+  --bg:         #f0faf2;
+  --card:       #ffffff;
+  --border:     #d4edda;
+  --text:       #1a2e1c;
+  --muted:      #5a7a5e;
+  --accent:     #078930;
+  --accent2:    #FCDD09;
+  --danger:     #DA121A;
+  --radius:     20px;
+  --shadow:     0 8px 32px rgba(7,137,48,.12);
+}
+
+/* ── Base ── */
+body {
+  font-family: "Segoe UI", Tahoma, "Noto Serif Ethiopic", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+/* ── Top bar ── */
+.topbar {
+  background: linear-gradient(90deg, var(--et-green) 0%, #05a836 100%);
+  color: #fff;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+  box-shadow: 0 3px 14px rgba(7,137,48,.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.topbar-flag  { font-size: 1.5rem; }
+.topbar-title { font-size: 1rem; font-weight: 800; line-height: 1.2; }
+.topbar-title small { font-weight: 400; font-size: .75rem; opacity: .85; display: block; }
+
+.score-badge {
+  background: rgba(255,255,255,.2);
+  border: 1.5px solid rgba(255,255,255,.4);
+  border-radius: 40px;
+  padding: 5px 14px;
+  font-size: .82rem;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+}
+.score-badge .star { color: var(--et-yellow); font-size: 1rem; }
+
+/* ── Welcome / Name screen ── */
+#welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 58px);
+  padding: 24px;
+  text-align: center;
+  animation: fadeUp .5s ease both;
+}
+.welcome-flag { font-size: 4rem; margin-bottom: 12px; }
+.welcome-title {
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 900;
+  color: var(--et-green);
+  margin-bottom: 6px;
+}
+.welcome-sub  { color: var(--muted); font-size: 1rem; margin-bottom: 28px; }
+.welcome-sub .am { font-size: 1.1rem; color: var(--et-green); font-weight: 700; display: block; margin-top: 4px; }
+
+.name-row { display: flex; gap: 10px; width: 100%; max-width: 380px; }
+.name-row input {
+  flex: 1;
+  border: 2.5px solid var(--border);
+  border-radius: 14px;
+  padding: 13px 16px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+  transition: border-color .2s;
+}
+.name-row input:focus { outline: none; border-color: var(--et-green); }
+.btn-start {
+  background: linear-gradient(135deg, var(--et-green), #05a836);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 13px 22px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .14s, box-shadow .14s;
+  box-shadow: 0 4px 14px rgba(7,137,48,.35);
+  white-space: nowrap;
+}
+.btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(7,137,48,.45); }
+
+/* ── Main app (hidden until name entered) ── */
+#app { display: none; }
+
+/* ── Mode nav ── */
+.mode-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 16px 4px;
+  flex-wrap: wrap;
+}
+.mode-btn {
+  background: #fff;
+  border: 2.5px solid var(--border);
+  border-radius: 40px;
+  padding: 9px 20px;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .18s;
+  color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.mode-btn:hover { border-color: var(--et-green); color: var(--et-green); }
+.mode-btn.active {
+  background: var(--et-green);
+  border-color: var(--et-green);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(7,137,48,.3);
+}
+.mode-btn .badge-new {
+  background: var(--et-red);
+  color: #fff;
+  font-size: .6rem;
+  border-radius: 20px;
+  padding: 1px 5px;
+  font-weight: 800;
+}
+
+/* ── Page container ── */
+.page { display: none; padding: 18px 12px; max-width: 780px; margin: 0 auto; }
+.page.active { display: block; animation: fadeUp .3s ease both; }
+
+/* ── Daily word card ── */
+.daily-card {
+  background: linear-gradient(135deg, #fff9e0, #fffdf0);
+  border: 2px solid var(--et-yellow);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 3px 14px rgba(252,221,9,.2);
+}
+.daily-icon { font-size: 2rem; flex-shrink: 0; }
+.daily-text .label { font-size: .72rem; font-weight: 800; text-transform: uppercase; color: #a07800; letter-spacing: .08em; }
+.daily-text .en  { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+.daily-text .am  { font-size: 1.5rem; font-weight: 900; color: var(--et-green); }
+.daily-text .hint { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+
+/* ── Section card ── */
+.sec-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px 20px 28px;
+  margin-bottom: 20px;
+}
+.sec-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--et-green);
+  margin-bottom: 4px;
+}
+.sec-title .am { font-size: .9rem; color: var(--muted); font-weight: 600; display: inline; margin-left: 6px; }
+.sec-desc { font-size: .85rem; color: var(--muted); margin-bottom: 16px; }
+
+/* ── Category pills ── */
+.cat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.cat-pill {
+  background: #f4f8f5;
+  border: 2px solid var(--border);
+  border-radius: 40px;
+  padding: 6px 14px;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .16s;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.cat-pill:hover  { border-color: var(--et-green); color: var(--et-green); }
+.cat-pill.active { background: var(--et-green); color: #fff; border-color: var(--et-green); }
+
+/* ── Lesson card (one word at a time) ── */
+.lesson-card {
+  background: linear-gradient(160deg, #f0faf2 0%, #e8f5ff 100%);
+  border: 2px solid #b8e6c4;
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: center;
+  margin-bottom: 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: popIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+.lesson-progress-text { font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.lesson-en {
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+.lesson-am {
+  font-size: clamp(2.2rem, 9vw, 3.6rem);
+  font-weight: 900;
+  color: var(--et-green);
+  line-height: 1.1;
+}
+.lesson-example {
+  background: rgba(255,255,255,.8);
+  border: 1.5px solid #d4edda;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: .88rem;
+  color: var(--muted);
+  max-width: 420px;
+  line-height: 1.5;
+}
+.lesson-example strong { color: var(--et-green); }
+
+.lesson-nav {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+/* ── Progress bar ── */
+.progress-bar-wrap {
+  background: #e8f5eb;
+  border-radius: 40px;
+  height: 10px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--et-green), #05c940);
+  border-radius: 40px;
+  transition: width .4s ease;
+}
+
+/* ── Word grid (learn mode browsing) ── */
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.word-tile {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .16s;
+}
+.word-tile:hover {
+  border-color: var(--et-green);
+  box-shadow: 0 3px 12px rgba(7,137,48,.15);
+  transform: translateY(-2px);
+}
+.word-tile .w-en { font-size: 1rem; font-weight: 700; color: var(--text); }
+.word-tile .w-am { font-size: 1.2rem; font-weight: 800; color: var(--et-green); margin-top: 4px; }
+.word-tile.learned { background: #eafaf0; border-color: var(--et-green); }
+.word-tile.learned::after { content: "✓"; position: absolute; top: 6px; right: 8px; color: var(--et-green); font-size: .75rem; font-weight: 900; }
+.word-tile { position: relative; }
+
+/* ── Quiz ── */
+.quiz-score-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.streak-display {
+  background: #fff9e0;
+  border: 2px solid var(--et-yellow);
+  border-radius: 40px;
+  padding: 5px 14px;
+  font-size: .85rem;
+  font-weight: 800;
+  color: #7a5f00;
+}
+.score-display {
+  background: #eafaf0;
+  border: 2px solid var(--et-green);
+  border-radius: 40px;
+  padding: 5px 14px;
+  font-size: .85rem;
+  font-weight: 800;
+  color: var(--et-green);
+}
+
+.quiz-question-card {
+  background: linear-gradient(135deg, #1a3a1e, #0d5c24);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(7,137,48,.3);
+}
+.quiz-q-label { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; opacity: .7; margin-bottom: 6px; }
+.quiz-q-en {
+  font-size: clamp(2rem, 9vw, 4rem);
+  font-weight: 900;
+  color: var(--et-yellow);
+  line-height: 1;
+  text-shadow: 2px 2px 8px rgba(0,0,0,.3);
+}
+.quiz-q-hint { font-size: .85rem; opacity: .65; margin-top: 8px; }
+
+.choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.choice-btn {
+  background: #fff;
+  border: 2.5px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 12px;
+  font-size: 1.4rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all .16s;
+  color: var(--text);
+  font-family: "Noto Serif Ethiopic", "Segoe UI", inherit;
+}
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--et-green);
+  background: #f0faf2;
+  transform: scale(1.03);
+}
+.choice-btn.correct {
+  background: #d4f5e2;
+  border-color: var(--et-green);
+  color: var(--et-green);
+  animation: correctPop .3s ease both;
+}
+.choice-btn.wrong {
+  background: #ffe0e0;
+  border-color: var(--et-red);
+  color: var(--et-red);
+  animation: shake .3s ease both;
+}
+.choice-btn:disabled { cursor: default; }
+
+.quiz-feedback {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 12px 16px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  display: none;
+  animation: fadeUp .25s ease both;
+}
+.quiz-feedback.correct-fb { background: #d4f5e2; color: var(--et-green); display: block; }
+.quiz-feedback.wrong-fb   { background: #ffe0e0; color: var(--et-red);   display: block; }
+
+/* ── Translate mode ── */
+.translate-chips-row {
+  display: flex; flex-wrap: wrap; gap: 7px;
+  margin-bottom: 14px;
+}
+.tr-chip {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 40px;
+  padding: 5px 13px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .14s;
+  display: flex; align-items: center; gap: 5px;
+  color: var(--text);
+}
+.tr-chip .chip-am { color: var(--et-green); font-size: 1rem; }
+.tr-chip:hover {
+  border-color: var(--et-green);
+  background: #f0faf2;
+  transform: translateY(-1px);
+}
+
+.translate-box-wrap { position: relative; margin-bottom: 14px; }
+textarea.tr-input {
+  width: 100%;
+  min-height: 90px;
+  border: 2.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px 36px;
+  font-size: 1.05rem;
+  font-family: inherit;
+  resize: vertical;
+  color: var(--text);
+  background: #fafcfa;
+  transition: border-color .2s;
+  line-height: 1.5;
+}
+textarea.tr-input:focus { outline: none; border-color: var(--et-green); background: #fff; }
+textarea.tr-input::placeholder { color: #aac4ae; }
+.tr-char-count {
+  position: absolute; bottom: 10px; right: 14px;
+  font-size: .72rem; color: var(--muted); pointer-events: none;
+}
+.tr-char-count.warn { color: var(--et-red); font-weight: 700; }
+
+.result-panel {
+  background: linear-gradient(135deg, #eafaf0, #e8f5ff);
+  border: 2px solid #b8e6c4;
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  display: none;
+  animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+.result-panel.visible { display: block; }
+.result-panel .rp-label { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+.result-panel .rp-en { font-size: .95rem; color: var(--muted); margin-bottom: 6px; }
+.result-panel .rp-am { font-size: 1.8rem; font-weight: 900; color: var(--et-green); line-height: 1.2; }
+.result-panel .rp-cheer { font-size: .88rem; font-weight: 700; color: #1a2e1c; margin-top: 8px; }
+
+/* ── Message bar ── */
+.msg-bar {
+  border-radius: 12px; padding: 10px 14px; font-size: .9rem;
+  font-weight: 700; display: none; margin: 10px 0;
+  align-items: flex-start; gap: 7px; animation: slideDown .2s ease;
+}
+.msg-bar.err  { background: #ffe0e0; color: var(--et-red); border: 1.5px solid #f5b8b8; display: flex; }
+.msg-bar.hint { background: #fffbe6; color: #7a5f00; border: 1.5px solid var(--et-yellow); display: flex; }
+
+/* ── Buttons ── */
+.btn {
+  border: none; border-radius: 40px;
+  padding: 11px 24px; font-size: .95rem;
+  font-weight: 800; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: transform .14s, box-shadow .14s, opacity .14s;
+  font-family: inherit;
+}
+.btn:active  { transform: scale(.96); }
+.btn:disabled { opacity: .5; cursor: default; pointer-events: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--et-green), #05a836);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(7,137,48,.3);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(7,137,48,.4); }
+
+.btn-yellow {
+  background: linear-gradient(135deg, var(--et-yellow), #f5c800);
+  color: #4a3800;
+  box-shadow: 0 4px 14px rgba(252,221,9,.35);
+}
+.btn-yellow:hover { transform: translateY(-2px); }
+
+.btn-ghost {
+  background: #f4f8f5; color: var(--muted);
+  padding: 9px 18px; font-size: .85rem;
+}
+.btn-ghost:hover { background: #e8f0ea; color: var(--text); }
+
+.btn-red {
+  background: linear-gradient(135deg, var(--et-red), #f03030);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(218,18,26,.25);
+}
+
+/* ── Stars earned popup ── */
+.stars-popup {
+  position: fixed;
+  top: 70px; right: 16px;
+  background: #fff;
+  border: 2px solid var(--et-yellow);
+  border-radius: 16px;
+  padding: 12px 18px;
+  font-size: .9rem;
+  font-weight: 800;
+  color: #7a5f00;
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+  z-index: 200;
+  display: none;
+  animation: slideDown .25s ease both;
+}
+.stars-popup.show { display: block; }
+
+/* ── Loading dots ── */
+.dots span {
+  display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%; background: #fff; margin: 0 2px;
+  animation: bounce 1s infinite;
+}
+.dots span:nth-child(2) { animation-delay: .15s; }
+.dots span:nth-child(3) { animation-delay: .3s;  }
+
+/* ── Keyframes ── */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes popIn    { from { opacity:0; transform:scale(.82); }       to { opacity:1; transform:scale(1); } }
+@keyframes slideDown{ from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes bounce   { 0%,80%,100%{transform:scale(0);} 40%{transform:scale(1);} }
+@keyframes correctPop { 0%{transform:scale(1);} 50%{transform:scale(1.08);} 100%{transform:scale(1);} }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+/* ── Responsive ── */
+@media (max-width: 500px) {
+  .choices-grid { grid-template-columns: 1fr; }
+  .lesson-nav   { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     TOP BAR
+═══════════════════════════════════════════════ -->
+<nav class="topbar" role="navigation">
+  <div class="topbar-brand">
+    <span class="topbar-flag">🇪🇹</span>
+    <div class="topbar-title">
+      Ethiopian Language Lab
+      <small>ቋንቋ መማሪያ</small>
+    </div>
+  </div>
+  <div class="score-badge" id="score-badge" title="Your score / ውጤትህ">
+    <span class="star">⭐</span>
+    <span id="badge-score">0 pts</span>
+  </div>
+</nav>
+
+<!-- Stars popup -->
+<div class="stars-popup" id="stars-popup"></div>
+
+<!-- ══════════════════════════════════════════════
+     WELCOME SCREEN
+═══════════════════════════════════════════════ -->
+<div id="welcome-screen">
+  <div class="welcome-flag">🇪🇹</div>
+  <h1 class="welcome-title">Welcome to Language Lab!</h1>
+  <p class="welcome-sub">
+    Learn English &amp; Amharic together through lessons, quizzes, and translation.
+    <span class="am">ስምህን ጻፍ እና ትምህርቱን ጀምር!</span>
+  </p>
+  <div class="name-row">
+    <input type="text" id="name-input" placeholder="Your name / ስምህ…" maxlength="30" autocomplete="off" />
+    <button class="btn-start" id="start-btn">ጀምር / Start →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Mode nav -->
+  <nav class="mode-nav" role="tablist" aria-label="Learning modes">
+    <button class="mode-btn active" data-mode="lesson"    role="tab" aria-selected="true">
+      📖 Lesson <span class="badge-new am" style="font-size:.7rem;color:var(--muted)">ትምህርት</span>
+    </button>
+    <button class="mode-btn"        data-mode="quiz"      role="tab" aria-selected="false">
+      🧠 Quiz <span class="badge-new am" style="font-size:.7rem;color:var(--muted)">ፈተና</span>
+    </button>
+    <button class="mode-btn"        data-mode="translate" role="tab" aria-selected="false">
+      🌍 Translate <span class="badge-new am" style="font-size:.7rem;color:var(--muted)">ተርጉም</span>
+    </button>
+  </nav>
+
+  <!-- ── LESSON PAGE ── -->
+  <div class="page active" id="page-lesson">
+
+    <!-- Daily word -->
+    <div class="daily-card" id="daily-card">
+      <div class="daily-icon">📅</div>
+      <div class="daily-text">
+        <div class="label">Word of the Day / የዛሬ ቃል</div>
+        <div class="en" id="daily-en">…</div>
+        <div class="am" id="daily-am">…</div>
+        <div class="hint" id="daily-hint"></div>
+      </div>
+    </div>
+
+    <div class="sec-card">
+      <div class="sec-title">Choose a Topic <span class="am">/ ርዕሰ ጉዳይ ምረጥ</span></div>
+      <div class="sec-desc">Pick a category, then go word by word. / ምድብ ምረጥ፣ ቃል በቃል ተማር።</div>
+      <div class="cat-row" id="lesson-cats"></div>
+    </div>
+
+    <div class="sec-card" id="lesson-card-wrap" style="display:none">
+      <!-- Progress bar -->
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="lesson-progress-fill" style="width:0%"></div>
+      </div>
+
+      <!-- Word display -->
+      <div class="lesson-card" id="lesson-display">
+        <div class="lesson-progress-text" id="lesson-pos">1 / 10</div>
+        <div class="lesson-en" id="lesson-en">cat</div>
+        <div class="lesson-am" id="lesson-am">ድመት</div>
+        <div class="lesson-example" id="lesson-example"></div>
+      </div>
+
+      <!-- Nav buttons -->
+      <div class="lesson-nav">
+        <button class="btn btn-ghost"    id="lesson-prev-btn">← Previous / ቀዳሚ</button>
+        <button class="btn btn-primary"  id="lesson-next-btn">Next / ቀጣይ →</button>
+        <button class="btn btn-yellow"   id="lesson-quiz-btn">Test me! / ፈትነኝ 🧠</button>
+      </div>
+    </div>
+
+    <!-- Browse all words in category -->
+    <div class="sec-card" id="browse-card" style="display:none">
+      <div class="sec-title">All Words <span class="am">/ ሁሉም ቃላት</span></div>
+      <div class="word-grid" id="browse-grid"></div>
+    </div>
+
+  </div><!-- /lesson page -->
+
+  <!-- ── QUIZ PAGE ── -->
+  <div class="page" id="page-quiz">
+
+    <div class="sec-card">
+      <div class="sec-title">Quiz Mode <span class="am">/ የፈተና ሁነታ</span></div>
+      <div class="sec-desc">See the English word — pick the right Amharic! / እንግሊዝኛ ቃሉን ይዩ — ትክክለኛ አማርኛ ምረጡ!</div>
+
+      <div class="quiz-score-bar">
+        <div class="streak-display">🔥 Streak: <span id="streak-count">0</span></div>
+        <div class="score-display">⭐ Score: <span id="quiz-score-count">0</span></div>
+        <button class="btn btn-ghost" id="quiz-cat-btn" style="font-size:.8rem;padding:6px 14px">Category / ምድብ ▼</button>
+      </div>
+
+      <!-- Category selector (collapsible) -->
+      <div id="quiz-cat-panel" style="display:none; margin-bottom:14px;">
+        <div class="cat-row" id="quiz-cats"></div>
+      </div>
+
+      <div class="quiz-question-card">
+        <div class="quiz-q-label">What is this in Amharic? / በአማርኛ ምን ይባላል?</div>
+        <div class="quiz-q-en"  id="quiz-word">…</div>
+        <div class="quiz-q-hint" id="quiz-hint"></div>
+      </div>
+
+      <div class="choices-grid" id="choices-grid"></div>
+
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="next-q-btn" style="display:none">Next Question / ቀጣይ →</button>
+        <button class="btn btn-ghost"   id="skip-q-btn">Skip / ዝለል</button>
+      </div>
+    </div>
+
+  </div><!-- /quiz page -->
+
+  <!-- ── TRANSLATE PAGE ── -->
+  <div class="page" id="page-translate">
+
+    <div class="sec-card">
+      <div class="sec-title">Free Translation <span class="am">/ ነጻ ትርጉም</span></div>
+      <div class="sec-desc">Type any English sentence and the AI translates it to Amharic. / ማንኛውንም እንግሊዝኛ ዓረፍተ ነገር ጻፍ — AI ወደ አማርኛ ይተረጉምልሃል።</div>
+
+      <!-- Quick word chips (top 3 categories) -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;">
+          Quick Words / ፈጣን ቃላት
+        </div>
+        <div class="cat-row" id="tr-cat-row"></div>
+        <div class="translate-chips-row" id="tr-chips"></div>
+      </div>
+
+      <div class="translate-box-wrap">
+        <textarea class="tr-input" id="tr-input"
+          placeholder="Type English here… / እዚህ እንግሊዝኛ ጻፍ…&#10;e.g. The lion is strong."
+          maxlength="200" rows="3" aria-label="English text to translate"></textarea>
+        <span class="tr-char-count" id="tr-char-count">0 / 200</span>
+      </div>
+
+      <div class="msg-bar" id="tr-msg" role="alert"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        <button class="btn btn-primary" id="tr-btn">🌍 Translate / ተርጉም</button>
+        <button class="btn btn-ghost"   id="tr-clear-btn">🗑️ Clear / ሰርዝ</button>
+      </div>
+
+      <div class="result-panel" id="tr-result">
+        <div class="rp-label">🇪🇹 Amharic Translation / የአማርኛ ትርጉም</div>
+        <div class="rp-en"  id="tr-src"></div>
+        <div class="rp-am"  id="tr-out"></div>
+        <div class="rp-cheer" id="tr-cheer"></div>
+      </div>
+
+    </div>
+  </div><!-- /translate page -->
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════
+     SCRIPT
+═══════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+/* ─────────── State ─────────── */
+let studentName   = "";
+let wordBank      = {};
+let allPairs      = [];
+let totalScore    = 0;
+
+// Lesson
+let lessonCat     = "";
+let lessonWords   = [];
+let lessonIdx     = 0;
+let learnedSet    = new Set();   // "en|am" keys
+
+// Quiz
+let quizCat       = "";
+let quizStreak    = 0;
+let quizScore     = 0;
+let currentQuiz   = null;
+let quizAnswered  = false;
+
+/* ─────────── Bilingual cheer pools ─────────── */
+const CHEERS_CORRECT = [
+  "ትክክል ነው! / Correct! 🌟",
+  "በጣም ጥሩ! / Excellent! ⭐",
+  "አስደናቂ! / Amazing! 🚀",
+  "እሩጥ! / Keep going! 🏆",
+  "ታላቅ ስራ! / Great job! 💪",
+  "ድንቅ ነህ! / You're a star! ✨",
+];
+const CHEERS_WRONG = [
+  "ሞክር እንደገና! / Try again! You'll get it! 💪",
+  "ትክክሉ ነው ያለው — ትምህርቱን ቀጥል! / That's the answer — keep learning!",
+  "ጥሩ ሙከራ! / Good try! Practice makes perfect! 📚",
+];
+const CHEERS_TRANSLATE = [
+  "ተርጉሟል! / Translated! Ethiopia says hi! 🇪🇹",
+  "አዎ! / Yes! Languages connect us! 🌍",
+  "ቃሉን ተማርክ! / You learned a word! ⭐",
+  "ድንቅ ነህ! / Brilliant work! 🧠",
+];
+
+const EXAMPLES = {
+  cat:"The cat drinks milk. / ድመቷ ወተት ትጠጣለች።",
+  dog:"My dog is happy. / ውሻዬ ደስተኛ ነው።",
+  lion:"The lion is strong. / አንበሳው ጠንካራ ነው።",
+  bread:"I eat bread every morning. / ጠዋት ዳቦ እበላለሁ።",
+  water:"Water is life. / ውሃ ሕይወት ነው።",
+  mother:"My mother is kind. / እናቴ ቸር ናት።",
+  school:"I love school. / ትምህርት ቤትን እወዳለሁ።",
+  book:"This book is interesting. / ይህ መጽሐፍ አስደሳች ነው።",
+  happy:"I am happy today. / ዛሬ ደስተኛ ነኝ።",
+  hello:"Hello, how are you? / ሰላም፣ እንዴት ናችሁ?",
+  sun:"The sun is bright. / ፀሐዩ ደማቅ ነው።",
+  run:"Children like to run. / ልጆች ሮጥ ይወዳሉ።",
+};
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function addScore(pts) {
+  totalScore  += pts;
+  quizScore   += pts;
+  document.getElementById("badge-score").textContent   = totalScore + " pts";
+  document.getElementById("quiz-score-count").textContent = quizScore;
+  flashStars(pts);
+}
+
+function flashStars(pts) {
+  const el = document.getElementById("stars-popup");
+  el.textContent = `+${pts} ⭐`;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), 1600);
+}
+
+/* ─────────── Welcome ─────────── */
+document.getElementById("start-btn").addEventListener("click", startSession);
+document.getElementById("name-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") startSession();
+});
+
+async function startSession() {
+  const val = document.getElementById("name-input").value.trim();
+  studentName = val || "Student";
+  document.getElementById("welcome-screen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  await loadWordBank();
+  loadDailyWord();
+  initLesson();
+  initQuiz();
+  initTranslate();
+}
+
+/* ─────────── Word bank ─────────── */
+async function loadWordBank() {
+  try {
+    const res = await fetch("/wordbank");
+    wordBank  = await res.json();
+    allPairs  = Object.values(wordBank).flat();
+  } catch {
+    wordBank = {};
+    allPairs = [];
+  }
+}
+
+/* ─────────── Daily word ─────────── */
+async function loadDailyWord() {
+  try {
+    const res  = await fetch("/dailyword");
+    const data = await res.json();
+    document.getElementById("daily-en").textContent   = data.en;
+    document.getElementById("daily-am").textContent   = data.am;
+    document.getElementById("daily-hint").textContent =
+      `Today's word for ${studentName} — try using it in a sentence!`;
+  } catch {
+    document.getElementById("daily-en").textContent = "hello";
+    document.getElementById("daily-am").textContent = "ሰላም";
+  }
+}
+
+/* ─────────────────────────────────────
+   LESSON
+──────────────────────────────────────*/
+function initLesson() {
+  const catsEl = document.getElementById("lesson-cats");
+  catsEl.innerHTML = "";
+  Object.keys(wordBank).forEach((cat, i) => {
+    const btn = document.createElement("button");
+    btn.className   = "cat-pill" + (i === 0 ? " active" : "");
+    btn.textContent = cat;
+    btn.addEventListener("click", () => startLesson(cat, btn));
+    catsEl.appendChild(btn);
+  });
+  // Auto-start first category
+  const cats = Object.keys(wordBank);
+  if (cats.length) startLesson(cats[0], catsEl.firstChild);
+}
+
+function startLesson(cat, clickedBtn) {
+  lessonCat   = cat;
+  lessonWords = wordBank[cat] || [];
+  lessonIdx   = 0;
+
+  document.querySelectorAll("#lesson-cats .cat-pill").forEach(b => b.classList.remove("active"));
+  clickedBtn.classList.add("active");
+
+  document.getElementById("lesson-card-wrap").style.display = "";
+  document.getElementById("browse-card").style.display      = "";
+
+  renderLessonWord();
+  renderBrowseGrid();
+}
+
+function renderLessonWord() {
+  if (!lessonWords.length) return;
+  const w   = lessonWords[lessonIdx];
+  const pct = Math.round(((lessonIdx) / lessonWords.length) * 100);
+
+  document.getElementById("lesson-pos").textContent      = `${lessonIdx + 1} / ${lessonWords.length}`;
+  document.getElementById("lesson-en").textContent       = w.en;
+  document.getElementById("lesson-am").textContent       = w.am;
+  document.getElementById("lesson-progress-fill").style.width = pct + "%";
+
+  const ex = EXAMPLES[w.en];
+  const exEl = document.getElementById("lesson-example");
+  if (ex) {
+    exEl.innerHTML = `📝 <strong>Example:</strong> ${ex}`;
+    exEl.style.display = "";
+  } else {
+    exEl.style.display = "none";
+  }
+
+  // Trigger re-animation
+  const card = document.getElementById("lesson-display");
+  card.style.animation = "none";
+  void card.offsetWidth;
+  card.style.animation = "";
+}
+
+document.getElementById("lesson-next-btn").addEventListener("click", () => {
+  if (!lessonWords.length) return;
+  // Mark current as learned
+  const w = lessonWords[lessonIdx];
+  learnedSet.add(`${w.en}|${w.am}`);
+  addScore(2);
+
+  lessonIdx = (lessonIdx + 1) % lessonWords.length;
+  renderLessonWord();
+  renderBrowseGrid();
+});
+
+document.getElementById("lesson-prev-btn").addEventListener("click", () => {
+  if (!lessonWords.length) return;
+  lessonIdx = (lessonIdx - 1 + lessonWords.length) % lessonWords.length;
+  renderLessonWord();
+});
+
+document.getElementById("lesson-quiz-btn").addEventListener("click", () => {
+  quizCat = lessonCat;
+  switchMode("quiz");
+  loadQuizQuestion();
+});
+
+function renderBrowseGrid() {
+  const grid = document.getElementById("browse-grid");
+  grid.innerHTML = "";
+  lessonWords.forEach(w => {
+    const tile = document.createElement("div");
+    tile.className = "word-tile" + (learnedSet.has(`${w.en}|${w.am}`) ? " learned" : "");
+    tile.innerHTML = `<div class="w-en">${w.en}</div><div class="w-am">${w.am}</div>`;
+    tile.addEventListener("click", () => {
+      // Jump to that word in lesson
+      const idx = lessonWords.indexOf(w);
+      if (idx >= 0) { lessonIdx = idx; renderLessonWord(); }
+    });
+    grid.appendChild(tile);
+  });
+}
+
+/* ─────────────────────────────────────
+   QUIZ
+──────────────────────────────────────*/
+function initQuiz() {
+  // Category selector inside quiz
+  const catsEl = document.getElementById("quiz-cats");
+  catsEl.innerHTML = "";
+  const allBtn = document.createElement("button");
+  allBtn.className   = "cat-pill active";
+  allBtn.textContent = "🌍 All / ሁሉም";
+  allBtn.addEventListener("click", () => {
+    quizCat = "";
+    document.querySelectorAll("#quiz-cats .cat-pill").forEach(b => b.classList.remove("active"));
+    allBtn.classList.add("active");
+    loadQuizQuestion();
+  });
+  catsEl.appendChild(allBtn);
+
+  Object.keys(wordBank).forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className   = "cat-pill";
+    btn.textContent = cat;
+    btn.addEventListener("click", () => {
+      quizCat = cat;
+      document.querySelectorAll("#quiz-cats .cat-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadQuizQuestion();
+    });
+    catsEl.appendChild(btn);
+  });
+
+  document.getElementById("quiz-cat-btn").addEventListener("click", () => {
+    const panel = document.getElementById("quiz-cat-panel");
+    panel.style.display = panel.style.display === "none" ? "" : "none";
+  });
+
+  loadQuizQuestion();
+}
+
+async function loadQuizQuestion() {
+  quizAnswered = false;
+  document.getElementById("quiz-feedback").className = "quiz-feedback";
+  document.getElementById("next-q-btn").style.display = "none";
+
+  const url = quizCat
+    ? `/quiz?category=${encodeURIComponent(quizCat)}`
+    : "/quiz";
+
+  try {
+    const res  = await fetch(url);
+    currentQuiz = await res.json();
+  } catch {
+    document.getElementById("quiz-word").textContent = "Error loading question";
+    return;
+  }
+
+  document.getElementById("quiz-word").textContent = currentQuiz.question_en;
+  document.getElementById("quiz-hint").textContent =
+    `Hint: starts with "${currentQuiz.correct[0]}" / 힌트: "${currentQuiz.correct[0]}" ይጀምራል`;
+
+  // Render choices
+  const grid = document.getElementById("choices-grid");
+  grid.innerHTML = "";
+  currentQuiz.choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.className   = "choice-btn";
+    btn.textContent = choice;
+    btn.addEventListener("click", () => handleAnswer(choice, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function handleAnswer(choice, btn) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const correct  = currentQuiz.correct;
+  const isRight  = choice === correct;
+  const fbEl     = document.getElementById("quiz-feedback");
+  const allBtns  = document.querySelectorAll(".choice-btn");
+
+  // Mark buttons
+  allBtns.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add("correct");
+  });
+
+  if (isRight) {
+    btn.classList.add("correct");
+    quizStreak++;
+    const pts = 5 + (quizStreak >= 3 ? 5 : 0); // bonus at 3+ streak
+    addScore(pts);
+    fbEl.className = "quiz-feedback correct-fb";
+    fbEl.innerHTML = `${rand(CHEERS_CORRECT)}<br>
+      <span style="font-size:.82rem;font-weight:600;opacity:.8">
+        Streak: ${quizStreak} 🔥 ${quizStreak >= 3 ? " Bonus +5! / ጉርሻ! ⭐" : ""}
+      </span>`;
+  } else {
+    btn.classList.add("wrong");
+    quizStreak = 0;
+    fbEl.className = "quiz-feedback wrong-fb";
+    fbEl.innerHTML = `${rand(CHEERS_WRONG)}<br>
+      <span style="font-size:.82rem;font-weight:600">
+        ትክክሉ: <strong>${correct}</strong> (${currentQuiz.question_en})
+      </span>`;
+  }
+
+  document.getElementById("streak-count").textContent = quizStreak;
+  document.getElementById("next-q-btn").style.display = "";
+}
+
+document.getElementById("next-q-btn").addEventListener("click", loadQuizQuestion);
+document.getElementById("skip-q-btn").addEventListener("click", () => {
+  quizStreak = 0;
+  document.getElementById("streak-count").textContent = 0;
+  loadQuizQuestion();
+});
+
+/* ─────────────────────────────────────
+   TRANSLATE
+──────────────────────────────────────*/
+function initTranslate() {
+  const cats   = Object.keys(wordBank).slice(0, 4);
+  const catRow = document.getElementById("tr-cat-row");
+  catRow.innerHTML = "";
+
+  cats.forEach((cat, i) => {
+    const btn = document.createElement("button");
+    btn.className   = "cat-pill" + (i === 0 ? " active" : "");
+    btn.textContent = cat;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#tr-cat-row .cat-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTrChips(cat);
+    });
+    catRow.appendChild(btn);
+  });
+
+  if (cats.length) renderTrChips(cats[0]);
+}
+
+function renderTrChips(cat) {
+  const chips = document.getElementById("tr-chips");
+  chips.innerHTML = "";
+  (wordBank[cat] || []).forEach(w => {
+    const btn = document.createElement("button");
+    btn.className = "tr-chip";
+    btn.innerHTML = `${w.en} <span class="chip-am">${w.am}</span>`;
+    btn.title     = `${w.en} = ${w.am}`;
+    btn.addEventListener("click", () => {
+      const inp = document.getElementById("tr-input");
+      const v   = inp.value.trimEnd();
+      inp.value = v + (v && !v.endsWith(" ") ? " " : "") + w.en;
+      updateTrChar();
+      inp.focus();
+      hideTrMsg();
+    });
+    chips.appendChild(btn);
+  });
+}
+
+// Char counter
+const trInput = document.getElementById("tr-input");
+trInput.addEventListener("input", updateTrChar);
+function updateTrChar() {
+  const len = trInput.value.length;
+  const el  = document.getElementById("tr-char-count");
+  el.textContent = `${len} / 200`;
+  el.classList.toggle("warn", len >= 180);
+}
+
+function showTrMsg(txt, type = "err") {
+  const el = document.getElementById("tr-msg");
+  el.textContent = txt;
+  el.className   = `msg-bar ${type}`;
+}
+function hideTrMsg() {
+  document.getElementById("tr-msg").className = "msg-bar";
+}
+
+document.getElementById("tr-btn").addEventListener("click", doTranslate);
+document.getElementById("tr-clear-btn").addEventListener("click", () => {
+  trInput.value = "";
+  updateTrChar();
+  hideTrMsg();
+  document.getElementById("tr-result").classList.remove("visible");
+  trInput.focus();
+});
+trInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) doTranslate();
+});
+
+async function doTranslate() {
+  const text = trInput.value.trim();
+  hideTrMsg();
+  document.getElementById("tr-result").classList.remove("visible");
+
+  if (!text) {
+    showTrMsg("😊 Please type something first! / ቀደም ብሎ ጻፍ!");
+    return;
+  }
+  if (text.split(/\s+/).length > 15) {
+    showTrMsg("✂️ Try 15 words or fewer / ከ15 ቃላት ያነሰ ሞክር።");
+    return;
+  }
+
+  const btn = document.getElementById("tr-btn");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="dots"><span></span><span></span><span></span></span> ትርጉም እየሰጠ ነው…`;
+
+  try {
+    const res  = await fetch("/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showTrMsg("😬 " + (data.error || "Something went wrong / ችግር ተፈጥሯል"));
+    } else {
+      document.getElementById("tr-src").textContent   = `"${data.source}"`;
+      document.getElementById("tr-out").textContent   = data.translation;
+      document.getElementById("tr-cheer").textContent = rand(CHEERS_TRANSLATE);
+      document.getElementById("tr-result").classList.add("visible");
+      addScore(3);
+    }
+  } catch {
+    showTrMsg("🖥️ Server not reachable / አገልጋዩ አይደርስም።");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🌍 Translate / ተርጉም";
+  }
+}
+
+/* ─────────────────────────────────────
+   MODE SWITCHING
+──────────────────────────────────────*/
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchMode(btn.dataset.mode));
+});
+
+function switchMode(mode) {
+  document.querySelectorAll(".mode-btn").forEach(b => {
+    const isActive = b.dataset.mode === mode;
+    b.classList.toggle("active", isActive);
+    b.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.toggle("active", p.id === `page-${mode}`);
+  });
+  // Reset quiz score display when entering quiz
+  if (mode === "quiz") {
+    quizScore = 0;
+    document.getElementById("quiz-score-count").textContent = "0";
+    document.getElementById("streak-count").textContent = quizStreak;
+  }
+}
+</script>
+</body>
+</html>

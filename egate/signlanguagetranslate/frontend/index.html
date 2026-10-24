@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASL Landmark Recognizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── top banner ─────────────────────────────────────────────────────────── -->
+<div id="banner" hidden></div>
+
+<!-- ── main layout ────────────────────────────────────────────────────────── -->
+<div class="app-layout">
+
+  <!-- ── LEFT COLUMN ──────────────────────────────────────────────────────── -->
+  <aside class="left-col">
+
+    <!-- Add Gesture card -->
+    <div class="card" id="add-gesture-card">
+      <h2 class="card-title">Add Gesture</h2>
+      <button id="btn-plus" class="btn-plus" aria-label="Focus name input">+</button>
+      <div class="input-row">
+        <input id="gesture-name-input" type="text" placeholder="New Gesture Title"
+               autocomplete="off" spellcheck="false" aria-label="New gesture name" />
+        <button id="btn-add-word" class="btn-add">Add Word ▶</button>
+      </div>
+      <div id="gesture-chips" class="chip-list" role="list" aria-label="Gesture list"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-row">
+      <button id="btn-train" class="btn-green">Train</button>
+      <button id="btn-clear" class="btn-red">Clear</button>
+    </div>
+
+    <!-- Phase 2: retrain MLP checkbox -->
+    <label class="retrain-label">
+      <input id="chk-retrain-mlp" type="checkbox" checked />
+      Also retrain MLP (.pt)
+    </label>
+
+    <!-- Phase 2: training progress -->
+    <div id="train-progress-wrap" hidden>
+      <div class="progress-bar-track">
+        <div id="train-progress-bar" class="progress-bar-fill"></div>
+      </div>
+      <div class="progress-meta">
+        <span id="train-progress-label">Training…</span>
+        <button id="btn-cancel-train" class="btn-sm-red">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Phase 2: revert -->
+    <button id="btn-revert-mlp" class="btn-sm-ghost">Revert to base MLP</button>
+
+    <!-- Example count + spinner -->
+    <div class="info-row">
+      <span id="example-count">0 examples</span>
+      <span id="spinner" class="spinner" hidden aria-label="Busy"></span>
+    </div>
+    <div id="recording-indicator" class="rec-dot" hidden>● REC</div>
+
+    <!-- Start / Stop -->
+    <div class="start-stop-row">
+      <button id="btn-start" class="btn-card btn-card-green" disabled>Start</button>
+      <button id="btn-stop"  class="btn-card btn-card-white" disabled>Stop</button>
+    </div>
+
+    <!-- Indicators + status -->
+    <div class="indicator-row">
+      <span id="ind-hand" class="indicator">hand ✗</span>
+      <span id="ind-pose" class="indicator">pose ✗</span>
+    </div>
+    <div id="status-line" class="status-line">Initialising…</div>
+    <button id="btn-debug" class="btn-sm-ghost">Debug</button>
+
+  </aside>
+
+  <!-- ── RIGHT COLUMN (camera) ────────────────────────────────────────────── -->
+  <main class="camera-area">
+
+    <div class="video-wrap">
+      <video id="video" autoplay muted playsinline
+             aria-label="Webcam feed"></video>
+      <canvas id="overlay" aria-hidden="true"></canvas>
+    </div>
+
+    <!-- Detected word readout -->
+    <div id="detected-word" class="detected-word" aria-live="polite">—</div>
+
+    <!-- Debug panel -->
+    <div id="debug-panel" class="debug-panel" hidden>
+      <div id="dbg-mlp"    class="dbg-line">MLP: —</div>
+      <div id="dbg-knn"    class="dbg-line">kNN: —</div>
+      <div id="dbg-fusion" class="dbg-line">Fusion: —</div>
+      <div id="dbg-fps"    class="dbg-line">FPS: —</div>
+    </div>
+
+  </main>
+
+</div><!-- end .app-layout -->
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

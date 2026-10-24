@@ -1,0 +1,8 @@
+{
+  "d_model": 256,
+  "direction": "en->am",
+  "src_vocab_size": 8000,
+  "tgt_vocab_size": 8000,
+  "max_len": 128,
+  "test_bleu": 9.541172660328307
+}

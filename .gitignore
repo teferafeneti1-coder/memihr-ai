@@ -1,0 +1,45 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+myenv/
+venv/
+env/
+.venv/
+
+# ── Large NLLB model archives (2.4 GB each — too big for GitHub) ──────────────
+# Adulis model → huggingface.co/fenetii/adulis-nllb
+archive/
+
+# Amharic-English model
+Amharic-English-finetuned/archive/
+
+# ── Zip files ─────────────────────────────────────────────────────────────────
+*.zip
+
+# ── Runtime outputs ────────────────────────────────────────────────────────────
+corrections/
+*.bak
+mlp_versions/
+progress.json
+custom_gestures.json
+settings.json
+manifest_snapshot.json
+
+# ── Jupyter checkpoints ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── OS / IDE ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ── Old copies ────────────────────────────────────────────────────────────────
+fidel_test_app/
+fidel_test_app.zip
+models (Copy)/
+hf-spaces/adulis-gradio/data/

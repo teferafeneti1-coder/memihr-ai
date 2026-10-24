@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Parity Self-Test</title>
+  <style>
+    body { font-family: monospace; background: #0f172a; color: #e2e8f0; padding: 20px; }
+    h1   { color: #facc15; margin-bottom: 16px; }
+    .pass  { color: #4ade80; font-weight: bold; }
+    .fail  { color: #f87171; font-weight: bold; }
+    .case  { margin: 10px 0; border-left: 3px solid #334155; padding-left: 12px; }
+    pre    { font-size: 0.78rem; color: #94a3b8; }
+    #summary { font-size: 1.1rem; margin-top: 20px; }
+  </style>
+</head>
+<body>
+<h1>Parity Self-Test (Python ↔ JS)</h1>
+<div id="output">Loading…</div>
+
+<script type="module">
+import { extractFeaturesRaw, FEATURE_DIM } from './js/features.js';
+import { loadMLP, mlpPredict } from './js/mlp.js';
+
+const FEAT_TOL = 1e-4;
+const PROB_TOL = 1e-4;
+
+async function run() {
+  const out = document.getElementById('output');
+
+  let caseData;
+  try {
+    const r = await fetch('./tests/parity_case.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    caseData = await r.json();
+  } catch (e) {
+    out.innerHTML = `<span class="fail">FAIL: could not load parity_case.json – ${e.message}</span>
+<pre>Run: python scripts/make_parity_case.py</pre>`;
+    return;
+  }
+
+  // validate feature_dim
+  if (caseData.feature_dim !== FEATURE_DIM) {
+    out.innerHTML = `<span class="fail">FAIL: feature_dim mismatch: ${caseData.feature_dim} vs ${FEATURE_DIM}</span>`;
+    return;
+  }
+
+  // minimal fake mlpJson to init features (just need mean/std)
+  const mlpJson = await fetch('/api/mlp/active').then(r=>r.json()).catch(()=>null);
+  if (!mlpJson) {
+    out.innerHTML = `<span class="fail">FAIL: backend not reachable. Start the server first.</span>`;
+    return;
+  }
+  loadMLP(mlpJson);
+
+  let html = '';
+  let allPass = true;
+  let passCount = 0;
+
+  for (const c of caseData.cases) {
+    // run JS feature extractor
+    const jsFeats = extractFeaturesRaw(c.hands_px, c.pose_px);
+    const pyFeats = new Float32Array(c.features);
+
+    // max abs diff for features
+    let maxFeatDiff = 0;
+    for (let i = 0; i < FEATURE_DIM; i++) {
+      const d = Math.abs(jsFeats[i] - pyFeats[i]);
+      if (d > maxFeatDiff) maxFeatDiff = d;
+    }
+
+    // run JS MLP
+    const jsResult = mlpPredict(jsFeats);
+    const pyProbs  = c.probs;
+    let maxProbDiff = 0;
+    for (let i = 0; i < pyProbs.length; i++) {
+      const d = Math.abs(jsResult.probs[i] - pyProbs[i]);
+      if (d > maxProbDiff) maxProbDiff = d;
+    }
+
+    const featPass = maxFeatDiff < FEAT_TOL;
+    const probPass = maxProbDiff < PROB_TOL;
+    const casePass = featPass && probPass;
+    if (!casePass) allPass = false;
+    else passCount++;
+
+    html += `<div class="case">
+  <strong>${c.name}</strong>
+  features: <span class="${featPass ? 'pass' : 'fail'}">${featPass ? 'PASS' : 'FAIL'}</span>
+  max_diff=${maxFeatDiff.toExponential(2)}
+  &nbsp;|&nbsp;
+  probs: <span class="${probPass ? 'pass' : 'fail'}">${probPass ? 'PASS' : 'FAIL'}</span>
+  max_diff=${maxProbDiff.toExponential(2)}
+</div>`;
+  }
+
+  html += `<div id="summary">
+Overall: <span class="${allPass ? 'pass' : 'fail'}">${allPass ? '✓ ALL PASS' : '✗ SOME FAILED'}</span>
+  (${passCount}/${caseData.cases.length} cases passed)
+</div>`;
+
+  out.innerHTML = html;
+}
+
+run().catch(e => {
+  document.getElementById('output').innerHTML =
+    `<span class="fail">FAIL: ${e.message}</span><pre>${e.stack}</pre>`;
+});
+</script>
+</body>
+</html>

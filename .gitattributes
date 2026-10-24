@@ -1,0 +1,8 @@
+# All model files committed normally (all under 100 MB GitHub limit)
+# English-Amharic Scratch model.pt = 52 MB  ✅ fits
+# Fidel CNN model = 4 MB                     ✅ fits
+# Sign Language MLP = 1.4 MB                 ✅ fits
+
+# Mark binary files so git doesn't try to diff them
+*.pt    binary
+*.model binary

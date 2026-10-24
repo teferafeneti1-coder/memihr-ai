@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>memihr ai</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<!-- ── Top bar ───────────────────────────────────────────────────────────── -->
+<header id="topbar">
+  <div id="topbar-left">
+    <span id="brand">memihr ai</span>
+    <span id="wake-progress-text"></span>
+  </div>
+  <div id="topbar-center">
+    <div id="memory-bar-wrap" title="System RAM">
+      <span id="memory-label">RAM</span>
+      <div id="memory-bar-track">
+        <div id="memory-bar-fill"></div>
+      </div>
+      <span id="memory-text"></span>
+    </div>
+  </div>
+  <div id="topbar-right">
+    <button class="btn btn-green" id="btn-wake-all">Wake all</button>
+    <button class="btn btn-red"   id="btn-sleep-all">Sleep all</button>
+  </div>
+</header>
+
+<!-- ── Layout ────────────────────────────────────────────────────────────── -->
+<div id="layout">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <!-- Home card -->
+    <div class="sidebar-card home-card" id="sidebar-home" data-pid="__home__">
+      <div class="card-title">Overview</div>
+    </div>
+    <!-- Project cards injected by JS -->
+    <div id="sidebar-projects"></div>
+  </aside>
+
+  <!-- Main panel -->
+  <main id="main-panel">
+
+    <!-- Home overview (shown when no project selected) -->
+    <section id="home-view">
+      <h2>Projects</h2>
+      <div id="home-grid"></div>
+    </section>
+
+    <!-- Project detail (shown when a project is selected) -->
+    <section id="project-view" hidden>
+      <div id="project-header">
+        <div>
+          <h2 id="project-title"></h2>
+          <p  id="project-desc"></p>
+        </div>
+        <div id="project-actions">
+          <button class="btn btn-green" id="btn-start">Start</button>
+          <button class="btn btn-red"   id="btn-stop">Stop</button>
+          <button class="btn btn-gray"  id="btn-restart">Restart</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div id="tabs">
+        <button class="tab active" data-tab="app">App</button>
+        <button class="tab"        data-tab="logs">Logs</button>
+        <button class="tab"        data-tab="edit">Edit</button>
+      </div>
+
+      <!-- App tab -->
+      <div id="tab-app" class="tab-panel">
+        <div id="app-toolbar">
+          <button class="btn btn-gray" id="btn-open-tab">Open in new tab</button>
+          <button class="btn btn-gray" id="btn-reload-iframe">Reload</button>
+        </div>
+        <div id="app-not-running" hidden>
+          <p id="app-not-running-msg"></p>
+          <button class="btn btn-green" id="btn-start-from-app">Start project</button>
+          <button class="btn btn-gray"  id="btn-open-tab-2">Open in new tab</button>
+        </div>
+        <!-- iframes are created once and shown/hidden to preserve state -->
+        <div id="iframe-container"></div>
+      </div>
+
+      <!-- Logs tab -->
+      <div id="tab-logs" class="tab-panel" hidden>
+        <div id="logs-toolbar">
+          <button class="btn btn-gray" id="btn-clear-logs">Clear view</button>
+          <button class="btn btn-gray" id="btn-copy-logs">Copy</button>
+        </div>
+        <div id="logs-output"></div>
+      </div>
+
+      <!-- Edit tab -->
+      <div id="tab-edit" class="tab-panel" hidden>
+        <form id="edit-form">
+          <label>Name<input type="text" name="name" /></label>
+          <label>Description<input type="text" name="description" /></label>
+          <label>Port<input type="number" name="port" /></label>
+          <label>Entry file<input type="text" name="entry" /></label>
+          <label>URL path<input type="text" name="url_path" /></label>
+          <label>RAM estimate (GB)<input type="number" step="0.1" name="ram_gb" /></label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="autostart" />
+            Autostart on Wake all
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="heavy_start" />
+            Heavy start (5 min timeout)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="unload_on_hide" />
+            Unload iframe when hidden (camera apps)
+          </label>
+          <div id="edit-error" class="error-msg" hidden></div>
+          <button type="submit" class="btn btn-green">Save</button>
+        </form>
+      </div>
+
+    </section><!-- /project-view -->
+  </main>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast-container"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

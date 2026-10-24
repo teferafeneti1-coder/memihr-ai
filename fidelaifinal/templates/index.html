@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fidel CNN — Model Tester</title>
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf9f7;
+    --accent: #3d5a80;
+    --good: #2e7d32;
+    --bad: #c62828;
+    --warn: #e65100;
+    --border: #d8d4cc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .subtitle { color: #666; margin-top: 0; margin-bottom: 20px; font-size: 0.9rem; }
+
+  /* ── Correction status bar ─────────────────────────────────────────── */
+  #correction-bar {
+    width: 100%;
+    max-width: 480px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.9rem;
+  }
+  #correction-bar span { flex: 1; }
+  #btn-train {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--warn);
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #btn-train:disabled { opacity: 0.4; cursor: default; }
+
+  /* ── Tabs ──────────────────────────────────────────────────────────── */
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .panel { display: none; width: 100%; max-width: 480px; }
+  .panel.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── Guided test ───────────────────────────────────────────────────── */
+  .target-char { font-size: 4rem; line-height: 1; margin-bottom: 8px; min-height: 70px; }
+  .progress { font-size: 0.9rem; color: #555; margin-bottom: 12px; }
+
+  canvas {
+    border: 2px solid var(--ink);
+    border-radius: 8px;
+    background: white;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button.action {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button.action.secondary {
+    background: #eee;
+    color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  button.action:disabled { opacity: 0.5; cursor: default; }
+
+  /* ── Prediction bars ───────────────────────────────────────────────── */
+  .results { margin-top: 20px; width: 100%; }
+  .pred-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .pred-char { font-size: 1.6rem; width: 40px; text-align: center; }
+  .pred-bar-track {
+    flex: 1; background: #eee; border-radius: 4px; height: 18px; overflow: hidden;
+  }
+  .pred-bar-fill { height: 100%; background: var(--accent); }
+  .pred-bar-fill.top { background: var(--good); }
+  .pred-pct { width: 50px; text-align: right; font-size: 0.85rem; color: #555; }
+
+  /* ── Feedback & stats ──────────────────────────────────────────────── */
+  .feedback { margin-top: 14px; font-size: 1.1rem; font-weight: 600; min-height: 28px; }
+  .feedback.correct { color: var(--good); }
+  .feedback.wrong   { color: var(--bad); }
+
+  .stats { margin-top: 10px; font-size: 0.95rem; color: #444; text-align: center; }
+
+  .missed-list { margin-top: 16px; width: 100%; font-size: 0.9rem; }
+  .missed-list h3 { font-size: 1rem; margin-bottom: 6px; }
+  .missed-item { color: var(--bad); }
+
+  /* ── "Tell correct answer" widget (free draw + guided) ─────────────── */
+  .correct-form {
+    display: none;           /* shown by JS when needed */
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    width: 100%;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  .correct-form.visible { display: flex; }
+  .correct-form input[type="text"] {
+    width: 80px;
+    font-size: 1.4rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+  .correct-form .row { display: flex; gap: 10px; align-items: center; }
+
+  /* ── Training overlay ──────────────────────────────────────────────── */
+  #train-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    gap: 14px;
+  }
+  #train-overlay.visible { display: flex; }
+  #train-overlay .box {
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 28px 36px;
+    text-align: center;
+    max-width: 340px;
+  }
+  #train-overlay .box h2 { margin: 0 0 10px; font-size: 1.2rem; }
+  #train-overlay .box p  { margin: 6px 0; font-size: 0.9rem; color: #ccc; }
+  #train-result { margin-top: 14px; font-size: 0.95rem; color: #a5d6a7; }
+  #btn-close-overlay {
+    display: none;
+    margin-top: 16px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Fidel CNN — Model Tester</h1>
+<p class="subtitle">Draw with black stroke on the white canvas, same as pen on paper.</p>
+
+<!-- ── Correction / Train bar (always visible) ───────────────────────────── -->
+<div id="correction-bar">
+  <span id="corr-count-label">Corrections buffered: 0 / 5 needed</span>
+  <button id="btn-train" disabled>Train on mistakes</button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="free">Free Draw</button>
+  <button class="tab-btn" data-tab="guided">Guided Test (all characters)</button>
+</div>
+
+<!-- ── FREE DRAW PANEL ────────────────────────────────────────────────────── -->
+<div class="panel active" id="panel-free">
+  <canvas id="canvas-free" width="280" height="280"></canvas>
+  <div class="controls">
+    <button class="action" id="btn-predict-free">Predict</button>
+    <button class="action secondary" id="btn-clear-free">Clear</button>
+  </div>
+  <div class="results" id="results-free"></div>
+
+  <!-- "Tell it the correct answer" — appears after a prediction -->
+  <div class="correct-form" id="correct-form-free">
+    <strong>Wrong prediction? Tell the correct answer:</strong>
+    <div class="row">
+      <input type="text" id="correct-input-free" maxlength="2" placeholder="ሀ">
+      <button class="action" id="btn-correct-free">Buffer correction</button>
+    </div>
+    <small style="color:#777">Type (or paste) the correct Fidel character, then click Buffer.</small>
+  </div>
+</div>
+
+<!-- ── GUIDED TEST PANEL ──────────────────────────────────────────────────── -->
+<div class="panel" id="panel-guided">
+  <div class="target-char" id="target-char">—</div>
+  <div class="progress" id="guided-progress">Loading characters…</div>
+  <canvas id="canvas-guided" width="280" height="280"></canvas>
+  <div class="controls">
+    <button class="action" id="btn-submit-guided">Submit</button>
+    <button class="action secondary" id="btn-clear-guided">Clear</button>
+    <button class="action secondary" id="btn-skip-guided">Skip</button>
+    <button class="action secondary" id="btn-restart-guided">Restart</button>
+  </div>
+  <div class="feedback" id="guided-feedback"></div>
+  <div class="stats" id="guided-stats"></div>
+
+  <!-- Shown on every miss — user decides what to do before advancing -->
+  <div class="correct-form" id="correct-form-guided">
+    <strong>What do you want to do?</strong>
+    <div class="row">
+      <button class="action" id="btn-keep-correction" style="background:var(--warn)">
+        ✓ Train on this mistake
+      </button>
+      <button class="action secondary" id="btn-discard-correction">
+        ✗ It was actually correct
+      </button>
+    </div>
+    <div class="row" style="margin-top:4px; font-size:0.85rem; color:#666; gap:6px;">
+      <span>Wrong label?</span>
+      <input type="text" id="correct-input-guided" maxlength="2" placeholder="ሀ"
+             style="width:60px; font-size:1.2rem; text-align:center; border:1px solid var(--border); border-radius:6px; padding:2px 6px;">
+      <button class="action secondary" id="btn-correct-guided" style="padding:6px 12px; font-size:0.85rem;">
+        Use this label instead
+      </button>
+    </div>
+  </div>
+
+  <div class="missed-list" id="missed-list"></div>
+</div>
+
+<!-- ── Training overlay ──────────────────────────────────────────────────── -->
+<div id="train-overlay">
+  <div class="box">
+    <h2>⚙ Fine-tuning in progress…</h2>
+    <p>Freezing early layers, updating last conv block + classifier.</p>
+    <p>3 epochs · LR = 5e-5 · augmented copies included</p>
+    <div id="train-result"></div>
+    <button id="btn-close-overlay">Close</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  Shared utilities
+// ═══════════════════════════════════════════════════════════════════════════
+function setupCanvas(canvas) {
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.lineWidth = 14;
+  ctx.lineCap   = "round";
+  ctx.lineJoin  = "round";
+  ctx.strokeStyle = "black";
+
+  let drawing = false, lastX = 0, lastY = 0;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: (cx - rect.left) * (canvas.width  / rect.width),
+      y: (cy - rect.top)  * (canvas.height / rect.height),
+    };
+  }
+  function start(e) { e.preventDefault(); drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; }
+  function move(e)  {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+  function end() { drawing = false; }
+
+  canvas.addEventListener("mousedown",  start);
+  canvas.addEventListener("mousemove",  move);
+  window.addEventListener("mouseup",    end);
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove",  move,  { passive: false });
+  canvas.addEventListener("touchend",   end);
+
+  return {
+    clear:     () => { ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); },
+    isBlank:   () => {
+      const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let i = 0; i < d.length; i += 4) if (d[i] < 250 || d[i+1] < 250 || d[i+2] < 250) return false;
+      return true;
+    },
+    toDataURL: () => canvas.toDataURL("image/png"),
+  };
+}
+
+async function callPredict(dataUrl) {
+  const r = await fetch("/api/predict", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: dataUrl }),
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || "prediction failed"); }
+  return r.json();
+}
+
+async function callCorrect(dataUrl, correctChar) {
+  const r = await fetch("/api/correct", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: dataUrl, correct_char: correctChar }),
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || "buffer failed"); }
+  return r.json();
+}
+
+function renderPredictions(container, predictions) {
+  container.innerHTML = "";
+  predictions.forEach((p, i) => {
+    const pct = (p.prob * 100).toFixed(1);
+    const row = document.createElement("div");
+    row.className = "pred-row";
+    row.innerHTML = `
+      <div class="pred-char">${p.char}</div>
+      <div class="pred-bar-track">
+        <div class="pred-bar-fill ${i === 0 ? "top" : ""}" style="width:${pct}%"></div>
+      </div>
+      <div class="pred-pct">${pct}%</div>`;
+    container.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Correction bar + Train button
+// ═══════════════════════════════════════════════════════════════════════════
+const corrCountLabel = document.getElementById("corr-count-label");
+const btnTrain       = document.getElementById("btn-train");
+const trainOverlay   = document.getElementById("train-overlay");
+const trainResult    = document.getElementById("train-result");
+const btnCloseOverlay = document.getElementById("btn-close-overlay");
+
+async function refreshCorrCount() {
+  try {
+    const r = await fetch("/api/corrections/count");
+    const d = await r.json();
+    corrCountLabel.textContent = `Corrections buffered: ${d.count} / ${d.min_needed} needed`;
+    btnTrain.disabled = !d.ready;
+  } catch (_) {}
+}
+
+btnTrain.addEventListener("click", async () => {
+  trainOverlay.classList.add("visible");
+  trainResult.textContent = "";
+  btnCloseOverlay.style.display = "none";
+  btnTrain.disabled = true;
+
+  try {
+    const r = await fetch("/api/train", { method: "POST" });
+    const d = await r.json();
+    if (!r.ok) {
+      trainResult.textContent = "Error: " + (d.error || "unknown");
+      trainResult.style.color = "#ef9a9a";
+    } else {
+      trainResult.innerHTML =
+        `✓ Trained on ${d.trained_on} corrections (${d.augmented_total} total with augmentation)<br>` +
+        `Epochs: ${d.epochs} · Losses: ${d.losses.join(" → ")}<br>` +
+        `<small style="color:#b0bec5">Backup: ${d.backup}</small>`;
+      trainResult.style.color = "#a5d6a7";
+    }
+  } catch (e) {
+    trainResult.textContent = "Request failed: " + e.message;
+    trainResult.style.color = "#ef9a9a";
+  }
+
+  btnCloseOverlay.style.display = "inline-block";
+  refreshCorrCount();
+});
+
+btnCloseOverlay.addEventListener("click", () => {
+  trainOverlay.classList.remove("visible");
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Tabs
+// ═══════════════════════════════════════════════════════════════════════════
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Free draw mode
+// ═══════════════════════════════════════════════════════════════════════════
+const freeCanvas      = setupCanvas(document.getElementById("canvas-free"));
+const resultsFree     = document.getElementById("results-free");
+const correctFormFree = document.getElementById("correct-form-free");
+const correctInputFree = document.getElementById("correct-input-free");
+let   lastFreeDataUrl = null;   // keep the canvas snapshot for buffering
+
+document.getElementById("btn-clear-free").addEventListener("click", () => {
+  freeCanvas.clear();
+  resultsFree.innerHTML = "";
+  correctFormFree.classList.remove("visible");
+  lastFreeDataUrl = null;
+});
+
+document.getElementById("btn-predict-free").addEventListener("click", async () => {
+  if (freeCanvas.isBlank()) { alert("Draw a character first."); return; }
+  resultsFree.innerHTML = "<p>Predicting…</p>";
+  correctFormFree.classList.remove("visible");
+  lastFreeDataUrl = freeCanvas.toDataURL();
+  try {
+    const { predictions } = await callPredict(lastFreeDataUrl);
+    renderPredictions(resultsFree, predictions);
+    // Show correction widget so user can flag if wrong
+    correctInputFree.value = "";
+    correctFormFree.classList.add("visible");
+  } catch (e) {
+    resultsFree.innerHTML = `<p style="color:red">${e.message}</p>`;
+  }
+});
+
+document.getElementById("btn-correct-free").addEventListener("click", async () => {
+  const ch = correctInputFree.value.trim();
+  if (!ch) { alert("Enter the correct character first."); return; }
+  if (!lastFreeDataUrl) { alert("No drawing to correct."); return; }
+  const btn = document.getElementById("btn-correct-free");
+  btn.disabled = true;
+  btn.textContent = "Buffering…";
+  try {
+    const d = await callCorrect(lastFreeDataUrl, ch);
+    btn.textContent = `✓ Buffered (${d.buffered} total)`;
+    refreshCorrCount();
+  } catch (e) {
+    btn.textContent = "Error: " + e.message;
+  }
+  // Don't re-enable — one correction per drawing is enough
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Guided test mode
+// ═══════════════════════════════════════════════════════════════════════════
+const guidedCanvas      = setupCanvas(document.getElementById("canvas-guided"));
+const correctFormGuided = document.getElementById("correct-form-guided");
+const correctInputGuided = document.getElementById("correct-input-guided");
+
+let allChars = [], order = [], idx = 0;
+let correct = 0, attempted = 0, missed = [];
+let pendingMissDataUrl  = null;   // snapshot for the miss that was just buffered
+let pendingMissTarget   = null;   // auto-detected correct char (the shown target)
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showCurrentTarget() {
+  document.getElementById("target-char").textContent = allChars[order[idx]];
+  document.getElementById("guided-progress").textContent = `Character ${idx + 1} of ${order.length}`;
+  document.getElementById("guided-feedback").textContent = "";
+  document.getElementById("guided-feedback").className = "feedback";
+  correctFormGuided.classList.remove("visible");
+  correctInputGuided.value = "";
+}
+
+function updateStats() {
+  const pct = attempted > 0 ? ((correct / attempted) * 100).toFixed(1) : "0.0";
+  document.getElementById("guided-stats").textContent =
+    `Score: ${correct}/${attempted} correct (${pct}%)`;
+}
+
+function renderMissed() {
+  const div = document.getElementById("missed-list");
+  if (!missed.length) { div.innerHTML = ""; return; }
+  let html = "<h3>Missed so far</h3><ul>";
+  missed.forEach(m => {
+    html += `<li class="missed-item">Target: ${m.target} → Predicted: ${m.predicted}</li>`;
+  });
+  html += "</ul>";
+  div.innerHTML = html;
+}
+
+function nextChar() {
+  guidedCanvas.clear();
+  correctFormGuided.classList.remove("visible");
+  idx++;
+  if (idx >= order.length) {
+    document.getElementById("target-char").textContent = "✓ Done!";
+    document.getElementById("guided-progress").textContent =
+      `Completed all ${order.length} characters.`;
+    return;
+  }
+  showCurrentTarget();
+}
+
+function restartGuided() {
+  order    = shuffle([...Array(allChars.length).keys()]);
+  idx      = 0;
+  correct  = 0;
+  attempted = 0;
+  missed   = [];
+  pendingMissDataUrl = null;
+  pendingMissTarget  = null;
+  guidedCanvas.clear();
+  showCurrentTarget();
+  updateStats();
+  renderMissed();
+}
+
+document.getElementById("btn-clear-guided").addEventListener("click", () => guidedCanvas.clear());
+document.getElementById("btn-restart-guided").addEventListener("click", restartGuided);
+document.getElementById("btn-skip-guided").addEventListener("click", nextChar);
+
+document.getElementById("btn-submit-guided").addEventListener("click", async () => {
+  if (guidedCanvas.isBlank()) { alert("Draw the character first."); return; }
+  const feedbackEl = document.getElementById("guided-feedback");
+  feedbackEl.textContent = "Checking…";
+  feedbackEl.className = "feedback";
+  correctFormGuided.classList.remove("visible");
+
+  // Disable Submit while we wait so user can't double-submit
+  const btnSubmit = document.getElementById("btn-submit-guided");
+  btnSubmit.disabled = true;
+
+  try {
+    const dataUrl = guidedCanvas.toDataURL();
+    const { predictions } = await callPredict(dataUrl);
+    const target = allChars[order[idx]];
+    const top    = predictions[0];
+    attempted++;
+
+    if (top.char === target) {
+      // ── Correct — show result, wait for user to click Next ───────────
+      correct++;
+      feedbackEl.textContent = `✓ Correct! (${(top.prob * 100).toFixed(1)}%)  — click Next ▶`;
+      feedbackEl.className   = "feedback correct";
+      updateStats();
+      // Re-use Skip button as "Next" — it just advances
+      document.getElementById("btn-skip-guided").textContent = "Next ▶";
+      btnSubmit.disabled = false;   // allow re-draw attempts if they want
+    } else {
+      // ── Wrong — buffer the correction, show options, WAIT for user ────
+      missed.push({ target, predicted: top.char });
+      feedbackEl.textContent =
+        `✗ Predicted: ${top.char} (${(top.prob * 100).toFixed(1)}%) — expected ${target}`;
+      feedbackEl.className = "feedback wrong";
+      updateStats();
+      renderMissed();
+
+      // Pre-buffer with the known target (user can override or discard below)
+      pendingMissDataUrl = dataUrl;
+      pendingMissTarget  = target;
+      try {
+        const d = await callCorrect(dataUrl, target);
+        feedbackEl.textContent +=
+          `\nQueued for training (${d.buffered} buffered) — decide below before continuing`;
+        refreshCorrCount();
+      } catch (_) {}
+
+      // Reset override input and show the decision panel — DO NOT advance
+      correctInputGuided.value = "";
+      document.getElementById("btn-keep-correction").disabled   = false;
+      document.getElementById("btn-keep-correction").textContent = "✓ Train on this mistake";
+      document.getElementById("btn-discard-correction").disabled   = false;
+      document.getElementById("btn-discard-correction").textContent = "✗ It was actually correct";
+      document.getElementById("btn-correct-guided").disabled   = false;
+      document.getElementById("btn-correct-guided").textContent = "Use this label instead";
+      correctFormGuided.classList.add("visible");
+      // Submit stays disabled — user must pick an option to continue
+    }
+  } catch (e) {
+    feedbackEl.textContent = "Error: " + e.message;
+    feedbackEl.className = "feedback wrong";
+    btnSubmit.disabled = false;
+  }
+});
+
+// ── "Train on this mistake" — keep buffered correction, advance ──────────
+document.getElementById("btn-keep-correction").addEventListener("click", () => {
+  document.getElementById("btn-keep-correction").disabled = true;
+  correctFormGuided.classList.remove("visible");
+  document.getElementById("btn-skip-guided").textContent = "Skip";
+  document.getElementById("btn-submit-guided").disabled = false;
+  nextChar();
+});
+
+// ── "It was actually correct" — remove the buffered entry, advance ────────
+document.getElementById("btn-discard-correction").addEventListener("click", async () => {
+  document.getElementById("btn-discard-correction").disabled = true;
+  // Call the discard endpoint to remove the last-buffered correction
+  try {
+    await fetch("/api/correct/discard_last", { method: "POST" });
+    refreshCorrCount();
+  } catch (_) {}
+  correctFormGuided.classList.remove("visible");
+  document.getElementById("btn-skip-guided").textContent = "Skip";
+  document.getElementById("btn-submit-guided").disabled = false;
+  nextChar();
+});
+
+// ── "Use this label instead" — replace buffered label, advance ────────────
+document.getElementById("btn-correct-guided").addEventListener("click", async () => {
+  const ch = correctInputGuided.value.trim();
+  if (!ch) { alert("Enter the replacement character first."); return; }
+  if (!pendingMissDataUrl) return;
+  const btn = document.getElementById("btn-correct-guided");
+  btn.disabled = true;
+  btn.textContent = "Updating…";
+  try {
+    // Discard the previous auto-buffered entry, then add with new label
+    await fetch("/api/correct/discard_last", { method: "POST" });
+    const d = await callCorrect(pendingMissDataUrl, ch);
+    btn.textContent = `✓ Updated (${d.buffered} total)`;
+    refreshCorrCount();
+  } catch (e) {
+    btn.textContent = "Error: " + e.message;
+    btn.disabled = false;
+    return;
+  }
+  setTimeout(() => {
+    correctFormGuided.classList.remove("visible");
+    document.getElementById("btn-skip-guided").textContent = "Skip";
+    document.getElementById("btn-submit-guided").disabled = false;
+    nextChar();
+  }, 800);
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+async function loadChars() {
+  const r    = await fetch("/api/chars");
+  const data = await r.json();
+  allChars   = data.chars;
+  restartGuided();
+}
+
+loadChars();
+refreshCorrCount();
+</script>
+</body>
+</html>

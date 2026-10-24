@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ትምህርት — Amharic AI Tutor</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS  — Blue + Green only
+    ═══════════════════════════════════════════ */
+    :root {
+      --blue-700:  #1A56DB;
+      --blue-600:  #1D64ED;
+      --blue-500:  #3B82F6;
+      --blue-100:  #DBEAFE;
+      --blue-50:   #EFF6FF;
+
+      --green-700: #166534;
+      --green-600: #16A34A;
+      --green-500: #22C55E;
+      --green-100: #DCFCE7;
+      --green-50:  #F0FDF4;
+
+      --neutral-900: #0F172A;
+      --neutral-700: #334155;
+      --neutral-500: #64748B;
+      --neutral-300: #CBD5E1;
+      --neutral-100: #F1F5F9;
+      --neutral-50:  #F8FAFC;
+      --white:       #FFFFFF;
+
+      --shadow-sm: 0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.06);
+      --shadow-md: 0 4px 16px rgba(15,23,42,.10), 0 2px 4px rgba(15,23,42,.06);
+      --shadow-lg: 0 10px 32px rgba(15,23,42,.12), 0 4px 8px rgba(15,23,42,.06);
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--neutral-50);
+      color: var(--neutral-900);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════════════
+       UTILITY
+    ═══════════════════════════════════════════ */
+    .hidden { display: none !important; }
+    .sr-only { position: absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT SHELL
+    ═══════════════════════════════════════════ */
+    #app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ─── Top bar ─────────────────────────────── */
+    #topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--neutral-300);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--blue-700);
+    }
+
+    .topbar-brand .brand-flag { font-size: 1.4rem; }
+    .topbar-brand .brand-am { color: var(--green-600); }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Score pills */
+    .score-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--neutral-100);
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--neutral-700);
+    }
+
+    .score-pill.stars  { background: var(--blue-50);  color: var(--blue-700); }
+    .score-pill.streak { background: var(--green-50); color: var(--green-700); }
+
+    #greeting-chip {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ─── Main content area ───────────────────── */
+    #main-content {
+      flex: 1;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    /* ─── Bottom nav ──────────────────────────── */
+    #bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--white);
+      border-top: 1px solid var(--neutral-300);
+      display: flex;
+      box-shadow: 0 -4px 16px rgba(15,23,42,.06);
+      z-index: 100;
+    }
+
+    .nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 0 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      transition: color .15s;
+      border-top: 2px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .nav-tab .tab-icon { font-size: 1.3rem; line-height: 1; }
+    .nav-tab .tab-am   { font-size: 0.6rem; color: inherit; opacity: .7; }
+
+    .nav-tab:hover { color: var(--blue-600); }
+
+    .nav-tab.active {
+      color: var(--blue-700);
+      border-top-color: var(--blue-700);
+    }
+
+    /* ═══════════════════════════════════════════
+       SCREEN: ONBOARDING
+    ═══════════════════════════════════════════ */
+    #screen-onboarding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .onboard-hero {
+      font-size: 4rem;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .onboard-title {
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 800;
+      color: var(--blue-700);
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .onboard-title span { color: var(--green-600); }
+
+    .onboard-sub {
+      font-size: 0.95rem;
+      color: var(--neutral-500);
+      margin-bottom: 36px;
+      font-weight: 500;
+    }
+
+    .onboard-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .onboard-card label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--neutral-500);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    .onboard-card label span {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--neutral-500);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    #name-input {
+      width: 100%;
+      height: 52px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--neutral-900);
+      background: var(--neutral-50);
+      border: 2px solid var(--neutral-300);
+      border-radius: var(--radius-md);
+      padding: 0 16px;
+      outline: none;
+      transition: border-color .18s;
+      margin-bottom: 20px;
+    }
+
+    #name-input:focus { border-color: var(--blue-500); }
+
+    /* ═══════════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background .15s, transform .1s, opacity .15s;
+      outline: none;
+      text-decoration: none;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: .45; cursor: default; }
+
+    .btn-primary {
+      background: var(--blue-700);
+      color: var(--white);
+      padding: 0 28px;
+      height: 52px;
+      width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--blue-600); }
+
+    .btn-secondary {
+      background: var(--green-600);
+      color: var(--white);
+      padding: 0 24px;
+      height: 48px;
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--green-700); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--blue-700);
+      border: 2px solid var(--blue-700);
+      padding: 0 24px;
+      height: 44px;
+    }
+    .btn-outline:hover:not(:disabled) { background: var(--blue-50); }
+
+    .btn-ghost {
+      background: var(--neutral-100);
+      color: var(--neutral-700);
+      padding: 0 20px;
+      height: 40px;
+      font-size: 0.85rem;
+    }
+    .btn-ghost:hover { background: var(--neutral-300); }
+
+    /* ═══════════════════════════════════════════
+       SECTION HEADER (used in all modes)
+    ═══════════════════════════════════════════ */
+    .section-header {
+      margin-bottom: 24px;
+    }
+
+    .section-header h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--neutral-900);
+      line-height: 1.2;
+    }
+
+    .section-header h2 span { color: var(--blue-700); }
+
+    .section-header p {
+      font-size: 0.88rem;
+      color: var(--neutral-500);
+      margin-top: 4px;
+    }
+
+    /* bilingual label */
+    .bi-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--neutral-500);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    /* ═══════════════════════════════════════════
+       DAILY WORD CARD
+    ═══════════════════════════════════════════ */
+    .daily-card {
+      background: linear-gradient(135deg, var(--blue-700) 0%, var(--blue-600) 100%);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      color: var(--white);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .daily-icon { font-size: 2rem; flex-shrink: 0; }
+
+    .daily-body { flex: 1; min-width: 0; }
+
+    .daily-eyebrow {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      opacity: .75;
+      margin-bottom: 3px;
+    }
+
+    .daily-am {
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.01em;
+    }
+
+    .daily-phonetic {
+      font-size: 0.78rem;
+      opacity: .8;
+      margin-bottom: 4px;
+    }
+
+    .daily-en {
+      font-size: 0.95rem;
+      font-weight: 600;
+      opacity: .9;
+    }
+
+    /* ═══════════════════════════════════════════
+       SCREEN: HOME (dashboard)
+    ═══════════════════════════════════════════ */
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .mode-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 22px 18px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .18s, border-color .18s, transform .12s;
+      text-align: left;
+    }
+
+    .mode-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--blue-500);
+      transform: translateY(-2px);
+    }
+
+    .mode-card .mode-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .mode-card .mode-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--neutral-900);
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+
+    .mode-card .mode-am {
+      font-size: 0.82rem;
+      color: var(--blue-700);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .mode-card .mode-desc {
+      font-size: 0.78rem;
+      color: var(--neutral-500);
+      line-height: 1.4;
+    }
+
+    /* ═══════════════════════════════════════════
+       SCREEN: LESSON MODE
+    ═══════════════════════════════════════════ */
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .cat-btn {
+      background: var(--white);
+      border: 2px solid var(--neutral-300);
+      border-radius: var(--radius-md);
+      padding: 16px 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .15s, background .15s, transform .12s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .cat-btn:hover {
+      border-color: var(--blue-500);
+      background: var(--blue-50);
+      transform: translateY(-2px);
+    }
+
+    .cat-btn .cat-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+    .cat-btn .cat-en   { font-size: 0.85rem; font-weight: 700; color: var(--neutral-900); display: block; }
+    .cat-btn .cat-am   { font-size: 0.72rem; color: var(--blue-700); font-weight: 600; display: block; margin-top: 2px; }
+
+    /* Lesson word card — visibility managed by .hidden class via JS */
+
+    .lesson-progress-bar {
+      height: 6px;
+      background: var(--neutral-200);
+      border-radius: 99px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .lesson-progress-bar .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue-600), var(--green-500));
+      border-radius: 99px;
+      transition: width .4s ease;
+    }
+
+    .lesson-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 36px 28px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .lesson-step-badge {
+      display: inline-block;
+      background: var(--blue-50);
+      color: var(--blue-700);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      border-radius: 50px;
+      padding: 4px 12px;
+      margin-bottom: 20px;
+    }
+
+    .lesson-am-word {
+      font-size: clamp(2.4rem, 8vw, 3.5rem);
+      font-weight: 800;
+      color: var(--neutral-900);
+      line-height: 1.1;
+      margin-bottom: 8px;
+      letter-spacing: -.02em;
+    }
+
+    .lesson-phonetic {
+      font-size: 1rem;
+      color: var(--neutral-500);
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    .lesson-en-word {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--blue-700);
+      margin-bottom: 24px;
+    }
+
+    .lesson-divider {
+      border: none;
+      border-top: 1px solid var(--neutral-300);
+      margin: 20px 0;
+    }
+
+    .lesson-sentence-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--neutral-500);
+      margin-bottom: 10px;
+    }
+
+    .lesson-sentence-am {
+      font-size: 1.1rem;
+      color: var(--neutral-900);
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    .lesson-sentence-en {
+      font-size: 0.95rem;
+      color: var(--neutral-500);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .lesson-nav {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    /* Lesson loading */
+    .spinner {
+      width: 36px; height: 36px;
+      border: 4px solid var(--neutral-200);
+      border-top-color: var(--blue-600);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════
+       SCREEN: QUIZ MODE
+    ═══════════════════════════════════════════ */
+    .quiz-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .quiz-streak-display {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-50);
+      border: 1.5px solid var(--green-100);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--green-700);
+    }
+
+    .quiz-score-display {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--blue-700);
+      background: var(--blue-50);
+      border: 1.5px solid var(--blue-100);
+      border-radius: 50px;
+      padding: 6px 14px;
+    }
+
+    .quiz-question-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .quiz-prompt-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--neutral-500);
+      margin-bottom: 12px;
+    }
+
+    .quiz-question-text {
+      font-size: clamp(1.3rem, 4vw, 1.8rem);
+      font-weight: 800;
+      color: var(--neutral-900);
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+
+    .quiz-sub {
+      font-size: 0.85rem;
+      color: var(--neutral-500);
+      margin-bottom: 28px;
+    }
+
+    .quiz-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .quiz-option {
+      background: var(--neutral-50);
+      border: 2.5px solid var(--neutral-300);
+      border-radius: var(--radius-md);
+      padding: 18px 12px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--neutral-900);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .15s, background .15s, transform .1s;
+      min-height: 68px;
+    }
+
+    .quiz-option:hover:not(:disabled) {
+      border-color: var(--blue-500);
+      background: var(--blue-50);
+      transform: translateY(-2px);
+    }
+
+    .quiz-option.correct {
+      background: var(--green-50);
+      border-color: var(--green-500);
+      color: var(--green-700);
+    }
+
+    .quiz-option.wrong {
+      background: #FEF2F2;
+      border-color: #F87171;
+      color: #B91C1C;
+    }
+
+    /* Feedback banner */
+    .quiz-feedback {
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .quiz-feedback.correct-fb {
+      background: var(--green-50);
+      border: 2px solid var(--green-500);
+      color: var(--green-700);
+    }
+
+    .quiz-feedback.wrong-fb {
+      background: #FEF2F2;
+      border: 2px solid #F87171;
+      color: #B91C1C;
+    }
+
+    .quiz-feedback .fb-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .quiz-feedback .fb-am   { display: block; font-size: 0.82rem; margin-top: 3px; opacity: .8; }
+
+    /* ═══════════════════════════════════════════
+       SCREEN: TRANSLATE MODE
+    ═══════════════════════════════════════════ */
+    .translate-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .translate-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--neutral-500);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .translate-textarea {
+      width: 100%;
+      min-height: 120px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1.05rem;
+      color: var(--neutral-900);
+      background: var(--neutral-50);
+      border: 2px solid var(--neutral-300);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      resize: vertical;
+      outline: none;
+      transition: border-color .18s;
+      line-height: 1.6;
+    }
+
+    .translate-textarea:focus { border-color: var(--blue-500); }
+
+    .translate-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .translate-char {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+    }
+
+    .translate-char.warn { color: #EF4444; }
+
+    /* Result pop-in */
+    @keyframes popIn {
+      0%   { opacity: 0; transform: scale(0.88) translateY(8px); }
+      65%  { transform: scale(1.02) translateY(0); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .translate-result {
+      background: linear-gradient(135deg, var(--green-50) 0%, var(--blue-50) 100%);
+      border: 2px solid var(--green-500);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    .result-en-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--green-700);
+      margin-bottom: 8px;
+    }
+
+    .result-en-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--neutral-900);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .result-source {
+      font-size: 0.8rem;
+      color: var(--neutral-500);
+      padding-top: 8px;
+      border-top: 1px solid var(--green-100);
+    }
+
+    /* ═══════════════════════════════════════════
+       LOADING OVERLAY (for translate + lesson)
+    ═══════════════════════════════════════════ */
+    .inline-loader {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--neutral-500);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 16px 0;
+    }
+
+    .inline-loader .mini-spin {
+      width: 20px; height: 20px;
+      border: 3px solid var(--neutral-200);
+      border-top-color: var(--blue-600);
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════════════════
+       LESSON COMPLETE / QUIZ DONE CARD
+    ═══════════════════════════════════════════ */
+    .complete-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 44px 28px;
+      text-align: center;
+    }
+
+    .complete-trophy { font-size: 4rem; margin-bottom: 16px; }
+
+    .complete-card h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--neutral-900);
+      margin-bottom: 6px;
+    }
+
+    .complete-card h3 span { color: var(--green-600); }
+
+    .complete-card p {
+      font-size: 0.92rem;
+      color: var(--neutral-500);
+      margin-bottom: 28px;
+    }
+
+    .stars-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--blue-700);
+      margin-bottom: 28px;
+    }
+
+    .complete-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ════════════════════════════════════════
+       TOP BAR
+  ════════════════════════════════════════ -->
+  <header id="topbar">
+    <div class="topbar-brand">
+      <span class="brand-flag">🇪🇹</span>
+      <span>AI Tutor &nbsp;<span class="brand-am">ትምህርት</span></span>
+    </div>
+    <div class="topbar-right hidden" id="progress-bar">
+      <span class="score-pill stars" id="pill-stars">⭐ <span id="val-stars">0</span></span>
+      <span class="score-pill streak" id="pill-streak">🔥 <span id="val-streak">0</span></span>
+      <span id="greeting-chip"></span>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════ -->
+  <main id="main-content">
+
+    <!-- ──────── ONBOARDING SCREEN ──────── -->
+    <section id="screen-onboarding">
+      <div class="onboard-hero">📚</div>
+      <h1 class="onboard-title">Welcome to <span>AI Tutor</span></h1>
+      <p class="onboard-sub">Learn Amharic with your personal AI teacher<br>
+        <strong>በ AI መምህርዎ አማርኛ ይማሩ</strong></p>
+
+      <div class="onboard-card">
+        <label for="name-input">
+          Your name / ስምዎ
+          <span>So we can greet you every session</span>
+        </label>
+        <input
+          id="name-input"
+          type="text"
+          placeholder="e.g. Liya, Samuel…"
+          maxlength="40"
+          autocomplete="given-name"
+          aria-label="Enter your name"
+        />
+        <button class="btn btn-primary" id="btn-start" onclick="startSession()">
+          Start Learning &nbsp;·&nbsp; ትምህርት ጀምር →
+        </button>
+      </div>
+    </section>
+
+    <!-- ──────── HOME / DASHBOARD ──────── -->
+    <section id="screen-home" class="hidden">
+
+      <!-- Daily word -->
+      <div class="daily-card" id="daily-card">
+        <span class="daily-icon">🌟</span>
+        <div class="daily-body">
+          <div class="daily-eyebrow">Word of the Day · የዛሬ ቃል</div>
+          <div class="daily-am" id="daily-am">{{ daily_word.am }}</div>
+          <div class="daily-phonetic" id="daily-phonetic">{{ daily_word.phonetic }}</div>
+          <div class="daily-en" id="daily-en">{{ daily_word.en }}</div>
+        </div>
+      </div>
+
+      <!-- Mode cards -->
+      <div class="section-header">
+        <h2>Choose a <span>Mode</span></h2>
+        <p>ሁነታ ይምረጡ — Pick how you want to learn today</p>
+      </div>
+
+      <div class="mode-grid">
+        <div class="mode-card" onclick="switchTab('lesson')" role="button" tabindex="0"
+          aria-label="Lesson mode">
+          <span class="mode-icon">📖</span>
+          <div class="mode-title">Lesson</div>
+          <div class="mode-am">ትምህርት</div>
+          <div class="mode-desc">Learn words category by category with example sentences.</div>
+        </div>
+        <div class="mode-card" onclick="switchTab('quiz')" role="button" tabindex="0"
+          aria-label="Quiz mode">
+          <span class="mode-icon">🧠</span>
+          <div class="mode-title">Quiz</div>
+          <div class="mode-am">ፈተና</div>
+          <div class="mode-desc">Multiple-choice challenges. Earn stars and keep your streak.</div>
+        </div>
+        <div class="mode-card" onclick="switchTab('translate')" role="button" tabindex="0"
+          aria-label="Translate mode">
+          <span class="mode-icon">🔤</span>
+          <div class="mode-title">Translate</div>
+          <div class="mode-am">ትርጉም</div>
+          <div class="mode-desc">Type any Amharic — the AI model translates it live.</div>
+        </div>
+        <div class="mode-card" style="cursor:default; opacity:.6;">
+          <span class="mode-icon">📊</span>
+          <div class="mode-title">Progress</div>
+          <div class="mode-am">እድገት</div>
+          <div class="mode-desc">⭐ Stars and 🔥 streak are always visible at the top.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ──────── LESSON SCREEN ──────── -->
+    <section id="screen-lesson" class="hidden">
+
+      <!-- Category picker (shown by default when lesson tab is active) -->
+      <div id="lesson-pick" class="hidden">
+        <div class="section-header">
+          <h2>📖 Lesson · <span>ትምህርት</span></h2>
+          <p>Choose a category — ምድብ ይምረጡ</p>
+        </div>
+        <div class="category-grid">
+          <button class="cat-btn" onclick="loadLesson('greetings')">
+            <span class="cat-icon">👋</span>
+            <span class="cat-en">Greetings</span>
+            <span class="cat-am">ሰላምታ</span>
+          </button>
+          <button class="cat-btn" onclick="loadLesson('family')">
+            <span class="cat-icon">👨‍👩‍👧</span>
+            <span class="cat-en">Family</span>
+            <span class="cat-am">ቤተሰብ</span>
+          </button>
+          <button class="cat-btn" onclick="loadLesson('nature')">
+            <span class="cat-icon">🌿</span>
+            <span class="cat-en">Nature</span>
+            <span class="cat-am">ተፈጥሮ</span>
+          </button>
+          <button class="cat-btn" onclick="loadLesson('school')">
+            <span class="cat-icon">🏫</span>
+            <span class="cat-en">School</span>
+            <span class="cat-am">ትምህርት ቤት</span>
+          </button>
+          <button class="cat-btn" onclick="loadLesson('food')">
+            <span class="cat-icon">🍽️</span>
+            <span class="cat-en">Food</span>
+            <span class="cat-am">ምግብ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active lesson -->
+      <div id="lesson-word-screen" class="hidden">
+
+        <div class="lesson-progress-bar">
+          <div class="bar-fill" id="lesson-bar" style="width:0%"></div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="lesson-loading" class="spinner"></div>
+        <div id="lesson-loading-msg" class="hidden" style="text-align:center;margin-top:12px;font-size:0.88rem;color:var(--neutral-500);font-weight:600;">
+          AI is translating this category for the first time…<br>
+          <span style="font-size:0.78rem;color:var(--neutral-400);">ሞዴሉ ለመጀመሪያ ጊዜ እየተረጎመ ነው — takes ~15 seconds</span>
+        </div>
+
+        <!-- Word card (populated by JS) -->
+        <div id="lesson-card" class="lesson-card hidden">
+          <div class="lesson-step-badge" id="lesson-badge">Introduce · አስተዋውቅ</div>
+          <div class="lesson-am-word" id="lw-am"></div>
+          <div class="lesson-phonetic" id="lw-phonetic"></div>
+          <div class="lesson-en-word" id="lw-en"></div>
+          <hr class="lesson-divider"/>
+          <div class="lesson-sentence-label">Example sentence · ምሳሌ ዓ문장</div>
+          <div class="lesson-sentence-am" id="lw-sent-am"></div>
+          <div class="lesson-sentence-en" id="lw-sent-en"></div>
+        </div>
+
+        <!-- Complete card -->
+        <div id="lesson-complete" class="complete-card hidden">
+          <div class="complete-trophy">🏆</div>
+          <h3>Lesson <span>Done!</span></h3>
+          <p>ትምህርቱ ተጠናቋል! Great job, <span id="lc-name"></span>.</p>
+          <div class="stars-row">⭐ <span id="lc-stars"></span> stars total</div>
+          <div class="complete-actions">
+            <button class="btn btn-outline" onclick="showLessonPicker()">← Back · ተመለስ</button>
+            <button class="btn btn-secondary" onclick="switchTab('quiz')">Try Quiz · ፈተና →</button>
+          </div>
+        </div>
+
+        <div id="lesson-nav" class="lesson-nav hidden">
+          <button class="btn btn-ghost" onclick="showLessonPicker()">← Categories</button>
+          <button class="btn btn-secondary" id="btn-next-word" onclick="advanceLesson()">
+            Next · ቀጣይ →
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ──────── QUIZ SCREEN ──────── -->
+    <section id="screen-quiz" class="hidden">
+
+      <div class="quiz-header">
+        <div>
+          <h2 style="font-size:1.3rem;font-weight:800;">🧠 Quiz · <span style="color:var(--blue-700)">ፈተና</span></h2>
+          <p style="font-size:0.8rem;color:var(--neutral-500);">Tap the correct Amharic word</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="quiz-streak-display">🔥 <span id="q-streak">0</span></div>
+          <div class="quiz-score-display">⭐ <span id="q-score">0</span></div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="quiz-loading" class="inline-loader">
+        <div class="mini-spin"></div>
+        <span>AI is thinking… AI እያሰበ ነው</span>
+      </div>
+
+      <!-- Question card -->
+      <div id="quiz-question-card" class="quiz-question-card hidden">
+        <div class="quiz-prompt-label">What is the Amharic for… · አማርኛው ምንድን ነው?</div>
+        <div class="quiz-question-text" id="q-text"></div>
+        <div class="quiz-sub" id="q-sub"></div>
+        <div class="quiz-options" id="q-options"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div id="quiz-feedback" class="quiz-feedback hidden"></div>
+
+      <!-- Next button -->
+      <div style="display:flex;gap:12px;margin-top:12px;" id="quiz-next-row" class="hidden">
+        <button class="btn btn-ghost" onclick="endQuiz()">Finish · ጨርስ</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="loadNextQuestion()">
+          Next Question · ቀጣይ ጥያቄ →
+        </button>
+      </div>
+
+      <!-- Quiz done -->
+      <div id="quiz-done" class="complete-card hidden">
+        <div class="complete-trophy">🎉</div>
+        <h3>Quiz <span>Complete!</span></h3>
+        <p>ፈተናው ተጠናቋል! Well done, <span id="qd-name"></span>.</p>
+        <div class="stars-row">⭐ <span id="qd-stars"></span> &nbsp;|&nbsp; 🔥 <span id="qd-streak"></span></div>
+        <div class="complete-actions">
+          <button class="btn btn-outline" onclick="restartQuiz()">Play Again · እንደገና</button>
+          <button class="btn btn-secondary" onclick="switchTab('lesson')">Try Lesson · ትምህርት</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ──────── TRANSLATE SCREEN ──────── -->
+    <section id="screen-translate" class="hidden">
+
+      <div class="section-header">
+        <h2>🔤 Translate · <span>ትርጉም</span></h2>
+        <p>Type Amharic — the AI model translates it · AI ሞዴሉ ይተረጉምልዎታል</p>
+      </div>
+
+      <div class="translate-card">
+        <div class="translate-label">
+          🇪🇹 Amharic input · አማርኛ ይጻፉ
+        </div>
+        <textarea
+          id="tr-input"
+          class="translate-textarea"
+          placeholder="ይጻፉ… type Amharic here"
+          maxlength="300"
+          aria-label="Amharic text to translate"
+          oninput="trCounter(this)"
+        ></textarea>
+        <div class="translate-actions">
+          <span class="translate-char" id="tr-counter">0 / 300</span>
+          <button class="btn btn-primary" style="width:auto;padding:0 28px;" onclick="doTranslate()">
+            Translate · ተርጉም →
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="tr-loading" class="inline-loader hidden">
+        <div class="mini-spin"></div>
+        <span>Model translating… ሞዴሉ እየተረጎመ ነው</span>
+      </div>
+
+      <!-- Result -->
+      <div id="tr-result" class="hidden">
+        <div class="translate-result">
+          <div class="result-en-label">🇬🇧 English · እንግሊዝኛ</div>
+          <div class="result-en-text" id="tr-en-text"></div>
+          <div class="result-source" id="tr-source-text"></div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div id="tr-error" class="quiz-feedback wrong-fb hidden">
+        <span class="fb-icon">⚠️</span>
+        <div>
+          <span id="tr-error-text"></span>
+          <span class="fb-am">ሞዴሉ ጊዜያዊ ችግር ገጥሞታል</span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════════════════
+       BOTTOM NAV  (hidden until logged in)
+  ════════════════════════════════════════ -->
+  <nav id="bottom-nav" class="hidden" aria-label="Main navigation">
+    <button class="nav-tab active" id="tab-home" onclick="switchTab('home')">
+      <span class="tab-icon">🏠</span>
+      <span>Home</span>
+      <span class="tab-am">ቤት</span>
+    </button>
+    <button class="nav-tab" id="tab-lesson" onclick="switchTab('lesson')">
+      <span class="tab-icon">📖</span>
+      <span>Lesson</span>
+      <span class="tab-am">ትምህርት</span>
+    </button>
+    <button class="nav-tab" id="tab-quiz" onclick="switchTab('quiz')">
+      <span class="tab-icon">🧠</span>
+      <span>Quiz</span>
+      <span class="tab-am">ፈተና</span>
+    </button>
+    <button class="nav-tab" id="tab-translate" onclick="switchTab('translate')">
+      <span class="tab-icon">🔤</span>
+      <span>Translate</span>
+      <span class="tab-am">ትርጉም</span>
+    </button>
+  </nav>
+
+</div><!-- /#app -->
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+/* ────────────────────────────────────────
+   STATE
+──────────────────────────────────────── */
+const STATE = {
+  name: "",
+  stars: 0,
+  streak: 0,
+  session_score: 0,
+
+  // lesson
+  lessonWords: [],
+  lessonIndex: 0,
+  lessonCategory: "",
+
+  // quiz
+  quizSeen: [],
+  quizAnswered: false,
+  quizCorrect: "",
+};
+
+/* ────────────────────────────────────────
+   ONBOARDING
+──────────────────────────────────────── */
+async function startSession() {
+  const nameEl = document.getElementById("name-input");
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); nameEl.style.borderColor = "#EF4444"; return; }
+  nameEl.style.borderColor = "";
+
+  const res = await post("/api/set-name", { name });
+  if (res.error) return;
+
+  STATE.name  = res.name;
+  STATE.stars = res.stars;
+  STATE.streak = res.streak;
+  STATE.session_score = res.session_score;
+
+  // Show app chrome
+  show("progress-bar");
+  show("bottom-nav");
+  hide("screen-onboarding");
+  updateScorePills();
+  document.getElementById("greeting-chip").textContent = "Hi, " + STATE.name + "!";
+
+  switchTab("home");
+}
+
+/* ────────────────────────────────────────
+   TAB / SCREEN SWITCHING
+──────────────────────────────────────── */
+const SCREENS = ["home", "lesson", "quiz", "translate"];
+
+function switchTab(tab) {
+  SCREENS.forEach(s => {
+    const sc = document.getElementById("screen-" + s);
+    const tb = document.getElementById("tab-" + s);
+    if (sc) { sc.classList.toggle("hidden", s !== tab); }
+    if (tb) { tb.classList.toggle("active", s === tab); }
+  });
+
+  if (tab === "lesson") {
+    // Always land on the category picker when entering lesson tab
+    show("lesson-pick");
+    hide("lesson-word-screen");
+  }
+  if (tab === "quiz") initQuiz();
+}
+
+/* ────────────────────────────────────────
+   SCORE PILLS
+──────────────────────────────────────── */
+function updateScorePills() {
+  document.getElementById("val-stars").textContent  = STATE.stars;
+  document.getElementById("val-streak").textContent = STATE.streak;
+  document.getElementById("q-streak").textContent   = STATE.streak;
+  document.getElementById("q-score").textContent    = STATE.session_score;
+}
+
+/* ────────────────────────────────────────
+   LESSON MODE
+──────────────────────────────────────── */
+async function loadLesson(category) {
+  STATE.lessonCategory = category;
+  STATE.lessonIndex    = 0;
+  STATE.lessonWords    = [];
+
+  hide("lesson-pick");
+  show("lesson-word-screen");
+  hide("lesson-card");
+  hide("lesson-complete");
+  hide("lesson-nav");
+
+  // Reset spinner to its original state (in case it was replaced by an error)
+  const loadEl = document.getElementById("lesson-loading");
+  loadEl.className = "spinner";
+  loadEl.innerHTML = "";
+  show("lesson-loading");
+
+  // Show "first-time translation" hint after 2s (only visible if still loading)
+  const hintTimer = setTimeout(() => show("lesson-loading-msg"), 2000);
+
+  const res = await get("/api/lesson/" + category);
+  clearTimeout(hintTimer);
+  hide("lesson-loading-msg");
+
+  if (!res || res.error) {
+    loadEl.className = "";
+    loadEl.innerHTML =
+      '<div style="text-align:center;padding:24px;">' +
+      '<p style="color:#EF4444;font-weight:700;font-size:1rem;margin-bottom:12px;">Could not load lesson. Please try again.</p>' +
+      '<button class="btn btn-outline" onclick="showLessonPicker()">← Back to categories</button>' +
+      '</div>';
+    return;
+  }
+
+  STATE.lessonWords = res.words;
+  hide("lesson-loading");
+  showLessonWord();
+}
+
+function showLessonWord() {
+  const words = STATE.lessonWords;
+  const idx   = STATE.lessonIndex;
+
+  if (idx >= words.length) {
+    showLessonComplete();
+    return;
+  }
+
+  const w = words[idx];
+  const pct = Math.round((idx / words.length) * 100);
+
+  document.getElementById("lesson-bar").style.width = pct + "%";
+  document.getElementById("lesson-badge").textContent =
+    "Word " + (idx + 1) + " of " + words.length + " · " + capFirst(STATE.lessonCategory);
+  document.getElementById("lw-am").textContent       = w.am;
+  document.getElementById("lw-phonetic").textContent = "[ " + w.phonetic + " ]";
+  document.getElementById("lw-en").textContent       = w.en;
+  document.getElementById("lw-sent-am").textContent  = w.sentence;
+  document.getElementById("lw-sent-en").textContent  = w.sentence_en;
+
+  show("lesson-card");
+  show("lesson-nav");
+
+  const btnNext = document.getElementById("btn-next-word");
+  btnNext.textContent = idx === words.length - 1
+    ? "Finish · ጨርስ →"
+    : "Next · ቀጣይ →";
+}
+
+function advanceLesson() {
+  STATE.lessonIndex++;
+  // Award a star per word reviewed
+  STATE.stars++;
+  STATE.session_score += 5;
+  updateScorePills();
+  syncProgress();
+  showLessonWord();
+}
+
+function showLessonComplete() {
+  hide("lesson-card");
+  hide("lesson-nav");
+  document.getElementById("lesson-bar").style.width = "100%";
+  document.getElementById("lc-name").textContent  = STATE.name;
+  document.getElementById("lc-stars").textContent = STATE.stars;
+  show("lesson-complete");
+}
+
+function showLessonPicker() {
+  hide("lesson-word-screen");
+  show("lesson-pick");
+}
+
+/* ────────────────────────────────────────
+   QUIZ MODE
+──────────────────────────────────────── */
+function initQuiz() {
+  STATE.quizSeen     = [];
+  STATE.quizAnswered = false;
+  STATE.quizCorrect  = "";
+  hide("quiz-done");
+  hide("quiz-feedback");
+  hide("quiz-next-row");
+  show("quiz-question-card");
+  loadNextQuestion();
+}
+
+async function loadNextQuestion() {
+  hide("quiz-feedback");
+  hide("quiz-next-row");
+  hide("quiz-question-card");
+  show("quiz-loading");
+
+  const res = await post("/api/quiz/question", { seen: STATE.quizSeen });
+  hide("quiz-loading");
+
+  if (!res || res.done) {
+    showQuizDone();
+    return;
+  }
+
+  STATE.quizAnswered = false;
+  STATE.quizCorrect  = res.correct_am;
+  STATE.quizSeen.push(res.correct_am);
+
+  document.getElementById("q-text").textContent = res.question_en;
+  document.getElementById("q-sub").textContent  = "[ " + res.phonetic + " ]";
+
+  const opts = document.getElementById("q-options");
+  opts.innerHTML = "";
+  res.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "quiz-option";
+    btn.textContent = opt;
+    btn.setAttribute("aria-label", "Choose " + opt);
+    btn.onclick = () => checkAnswer(opt, btn);
+    opts.appendChild(btn);
+  });
+
+  show("quiz-question-card");
+}
+
+async function checkAnswer(chosen, btnEl) {
+  if (STATE.quizAnswered) return;
+  STATE.quizAnswered = true;
+
+  // Disable all options
+  document.querySelectorAll(".quiz-option").forEach(b => { b.disabled = true; });
+
+  // Highlight
+  const isCorrect = chosen === STATE.quizCorrect;
+  btnEl.classList.add(isCorrect ? "correct" : "wrong");
+
+  if (!isCorrect) {
+    // Highlight the correct one
+    document.querySelectorAll(".quiz-option").forEach(b => {
+      if (b.textContent === STATE.quizCorrect) b.classList.add("correct");
+    });
+  }
+
+  // Call backend for score
+  const res = await post("/api/quiz/check", {
+    chosen:  chosen,
+    correct: STATE.quizCorrect,
+  });
+
+  STATE.stars         = res.stars;
+  STATE.streak        = res.streak;
+  STATE.session_score = res.session_score;
+  updateScorePills();
+
+  // Feedback banner
+  const fb = document.getElementById("quiz-feedback");
+  if (isCorrect) {
+    fb.className = "quiz-feedback correct-fb";
+    const encouragements = [
+      ["Great job! ✓", "በጣም ጥሩ! ✓"],
+      ["Correct! Keep going!", "ትክክል! ቀጥል!"],
+      ["You nailed it! 🎉", "አሸነፍህ! 🎉"],
+      ["Excellent! ⭐", "ልዩ! ⭐"],
+    ];
+    const pick = encouragements[Math.floor(Math.random() * encouragements.length)];
+    fb.innerHTML = `<span class="fb-icon">✅</span>
+      <div><strong>${pick[0]}</strong>
+      <span class="fb-am">${pick[1]}</span></div>`;
+  } else {
+    fb.className = "quiz-feedback wrong-fb";
+    fb.innerHTML = `<span class="fb-icon">❌</span>
+      <div><strong>Not quite. The answer was: ${STATE.quizCorrect}</strong>
+      <span class="fb-am">ትክክለኛ መልሱ፦ ${STATE.quizCorrect}</span></div>`;
+  }
+  show("quiz-feedback");
+  show("quiz-next-row");
+}
+
+function endQuiz()    { showQuizDone(); }
+function restartQuiz(){ initQuiz(); }
+
+function showQuizDone() {
+  hide("quiz-question-card");
+  hide("quiz-feedback");
+  hide("quiz-next-row");
+  document.getElementById("qd-name").textContent   = STATE.name;
+  document.getElementById("qd-stars").textContent  = STATE.stars;
+  document.getElementById("qd-streak").textContent = STATE.streak;
+  show("quiz-done");
+}
+
+/* ────────────────────────────────────────
+   TRANSLATE MODE
+──────────────────────────────────────── */
+function trCounter(el) {
+  const len = el.value.length;
+  const ctr = document.getElementById("tr-counter");
+  ctr.textContent = len + " / 300";
+  ctr.classList.toggle("warn", len > 260);
+}
+
+async function doTranslate() {
+  const text = document.getElementById("tr-input").value.trim();
+  if (!text) return;
+
+  hide("tr-result");
+  hide("tr-error");
+  show("tr-loading");
+
+  const res = await post("/api/translate", { text });
+  hide("tr-loading");
+
+  if (res.error) {
+    document.getElementById("tr-error-text").textContent = res.error;
+    show("tr-error");
+    return;
+  }
+
+  document.getElementById("tr-en-text").textContent    = res.translation;
+  document.getElementById("tr-source-text").textContent = "Original: " + res.source;
+  show("tr-result");
+}
+
+/* ────────────────────────────────────────
+   SYNC PROGRESS TO SERVER SESSION
+──────────────────────────────────────── */
+async function syncProgress() {
+  // fire-and-forget; server already updated via quiz/check
+}
+
+/* ────────────────────────────────────────
+   HELPERS
+──────────────────────────────────────── */
+function show(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("hidden");
+}
+
+function hide(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add("hidden");
+}
+
+function capFirst(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+async function post(url, data) {
+  try {
+    const r = await fetch(url, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(data),
+    });
+    return await r.json();
+  } catch(e) {
+    console.error("POST", url, e);
+    return { error: "Network error" };
+  }
+}
+
+async function get(url) {
+  try {
+    const r = await fetch(url);
+    return await r.json();
+  } catch(e) {
+    console.error("GET", url, e);
+    return { error: "Network error" };
+  }
+}
+
+/* ────────────────────────────────────────
+   KEYBOARD: Enter on name input
+──────────────────────────────────────── */
+document.getElementById("name-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") startSession();
+});
+
+/* ────────────────────────────────────────
+   KEYBOARD: Enter on translate textarea
+──────────────────────────────────────── */
+document.getElementById("tr-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) doTranslate();
+});
+</script>
+
+</body>
+</html>

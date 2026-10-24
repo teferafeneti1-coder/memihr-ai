@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adulis — Amharic ⇄ Afan Oromo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@400;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <div class="wordmark">
+      <span class="wordmark-main">Adulis</span>
+      <span class="wordmark-sub" id="wordmark-sub">a port between two languages</span>
+    </div>
+    <div class="header-right">
+      <!-- Mode toggle -->
+      <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Learning mode">
+        <button class="mode-btn is-active" id="mode-adult" data-mode="adult" title="Adult mode">
+          Adult
+        </button>
+        <button class="mode-btn" id="mode-kids" data-mode="kids" title="Kids mode (ages 4–12)">
+          Kids ✦
+        </button>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button class="tab-btn is-active" data-tab="translate">Translate</button>
+        <button class="tab-btn" data-tab="lessons">Lessons</button>
+        <button class="tab-btn" data-tab="quiz">Quiz</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- TRANSLATE (shared, same in both modes) -->
+  <section class="panel is-active" id="panel-translate">
+    <p class="panel-intro" id="translate-intro">
+      Aksum's merchants once carried goods through the port of Adulis, between
+      the Red Sea and the highlands. This one carries sentences —
+      between Amharic and Afan Oromo.
+    </p>
+
+    <div class="translate-card">
+      <div class="direction-row">
+        <span class="direction-label" id="src-label">Amharic</span>
+        <button class="swap-btn" id="swap-btn" title="Swap direction" aria-label="Swap direction">⇄</button>
+        <span class="direction-label" id="tgt-label">Afan Oromo</span>
+      </div>
+
+      <textarea id="src-text" class="src-input" lang="am" rows="4"
+        placeholder="የጥንቷ አክሱም..."></textarea>
+
+      <div class="translate-actions">
+        <button id="translate-btn" class="primary-btn">Translate</button>
+        <span id="translate-status" class="status-text"></span>
+      </div>
+
+      <div class="output-box" id="output-box">
+        <span class="output-placeholder" id="output-placeholder">Your translation will appear here.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSONS -->
+  <section class="panel" id="panel-lessons">
+
+    <!-- Adult lessons view -->
+    <div id="lessons-adult">
+      <p class="panel-intro">
+        Pick a lesson, choose a direction, then hit <strong>Translate with model →</strong>
+        on each card to see the model's live translation. The reference from the
+        training data appears below it so you can compare.
+      </p>
+      <div class="lesson-layout">
+        <ul class="lesson-list" id="lesson-list"></ul>
+        <div class="lesson-detail" id="lesson-detail">
+          <p class="empty-hint">Pick a lesson on the left to open it.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kids lessons view -->
+    <div id="lessons-kids" hidden>
+      <p class="panel-intro kids-intro">
+        🌟 Pick a category and learn words in both languages!
+      </p>
+
+      <!-- Category picker -->
+      <div id="kids-word-picker">
+        <p class="kids-pick-hint">Choose a category:</p>
+        <div class="kids-cat-grid" id="kids-cat-grid"></div>
+      </div>
+
+      <!-- Word flashcard reader -->
+      <div id="kids-word-reader" hidden>
+        <div class="kids-lesson-header">
+          <button class="kids-back-btn" id="kids-word-back">← Back</button>
+          <span class="kids-lesson-title" id="kids-word-cat-title"></span>
+          <span class="kids-card-counter" id="kids-word-counter"></span>
+        </div>
+
+        <!-- The flip card -->
+        <div class="kids-flip-area" id="kids-flip-area" tabindex="0" role="button"
+             aria-label="Tap to flip card" title="Tap to flip">
+          <div class="kids-flip-inner" id="kids-flip-inner">
+            <div class="kids-flip-front">
+              <div class="kids-word-emoji" id="kids-word-emoji-front"></div>
+              <div class="kids-lang-badge kids-lang-am">Amharic</div>
+              <p class="kids-word-big" id="kids-word-am" lang="am"></p>
+              <p class="kids-tap-hint">👆 Tap to see in Afan Oromo</p>
+            </div>
+            <div class="kids-flip-back">
+              <div class="kids-word-emoji" id="kids-word-emoji-back"></div>
+              <div class="kids-lang-badge kids-lang-om">Afan Oromo</div>
+              <span class="kids-model-label" id="kids-word-model-label">Model says:</span>
+              <p class="kids-word-big" id="kids-word-om" lang="om"></p>
+              <p class="kids-word-reference" id="kids-word-reference" hidden></p>
+              <p class="kids-tap-hint">👆 Tap to flip back</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="kids-nav-row">
+          <button class="kids-nav-btn" id="kids-word-prev" disabled>◀ Prev</button>
+          <div class="kids-progress-dots" id="kids-word-dots"></div>
+          <button class="kids-nav-btn" id="kids-word-next">Next ▶</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="panel-quiz">
+
+    <!-- Adult quiz view -->
+    <div id="quiz-adult">
+      <p class="panel-intro">
+        Read the sentence, pick the sentence that means the same thing in the
+        other language. Directions alternate, same as trade — goods went both
+        ways through Adulis.
+      </p>
+
+      <div class="quiz-setup" id="quiz-setup">
+        <label class="field-label" for="quiz-lesson-select">Quiz from</label>
+        <select id="quiz-lesson-select">
+          <option value="mix">Random mix (all lessons)</option>
+        </select>
+
+        <label class="field-label" for="quiz-count">Questions</label>
+        <select id="quiz-count">
+          <option value="5" selected>5</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
+        </select>
+
+        <button class="primary-btn" id="quiz-start-btn">Start quiz</button>
+      </div>
+
+      <div class="quiz-runner" id="quiz-runner" hidden>
+        <div class="quiz-progress" id="quiz-progress"></div>
+        <p class="quiz-prompt-label" id="quiz-prompt-label"></p>
+        <p class="quiz-prompt" id="quiz-prompt" lang="am"></p>
+        <ul class="quiz-options" id="quiz-options"></ul>
+        <div class="quiz-feedback" id="quiz-feedback"></div>
+        <div class="quiz-model-box" id="quiz-model-box" hidden></div>
+        <button class="primary-btn" id="quiz-next-btn" hidden>Next</button>
+      </div>
+
+      <div class="quiz-result" id="quiz-result" hidden>
+        <p class="quiz-score" id="quiz-score"></p>
+        <button class="primary-btn" id="quiz-restart-btn">Try another quiz</button>
+      </div>
+    </div>
+
+    <!-- Kids quiz view -->
+    <div id="quiz-kids" hidden>
+      <p class="panel-intro kids-intro">
+        🎯 Match the word! See the word and pick the right translation.
+      </p>
+
+      <div class="kids-quiz-setup" id="kids-quiz-setup">
+        <p class="kids-pick-hint">Pick a category:</p>
+        <div class="kids-cat-grid" id="kids-quiz-cat-grid"></div>
+
+        <p class="kids-pick-hint" style="margin-top:20px;">How many words?</p>
+        <div class="kids-count-row">
+          <button class="kids-count-btn is-active" data-count="4">4</button>
+          <button class="kids-count-btn" data-count="6">6</button>
+          <button class="kids-count-btn" data-count="8">8</button>
+        </div>
+        <button class="kids-start-btn" id="kids-quiz-start-btn">🚀 Let's Go!</button>
+      </div>
+
+      <div class="kids-quiz-runner" id="kids-quiz-runner" hidden>
+        <!-- Stars row -->
+        <div class="kids-stars-row" id="kids-stars-row"></div>
+
+        <p class="kids-quiz-direction" id="kids-quiz-direction"></p>
+        <div class="kids-quiz-prompt-box">
+          <div class="kids-word-emoji kids-prompt-emoji" id="kids-quiz-emoji"></div>
+          <p class="kids-quiz-word" id="kids-quiz-prompt"></p>
+        </div>
+
+        <ul class="kids-quiz-options" id="kids-quiz-options"></ul>
+
+        <div class="kids-quiz-feedback" id="kids-quiz-feedback" hidden>
+          <span class="kids-feedback-emoji" id="kids-feedback-emoji"></span>
+          <span class="kids-feedback-text" id="kids-feedback-text"></span>
+        </div>
+
+        <div class="kids-quiz-model-box" id="kids-quiz-model-box" hidden></div>
+
+        <button class="kids-next-btn" id="kids-quiz-next-btn" hidden>Next ▶</button>
+      </div>
+
+      <div class="kids-quiz-result" id="kids-quiz-result" hidden>
+        <div class="kids-result-stars" id="kids-result-stars"></div>
+        <p class="kids-result-msg" id="kids-result-msg"></p>
+        <p class="kids-result-score" id="kids-result-score"></p>
+        <button class="kids-start-btn" id="kids-quiz-restart-btn">🔄 Play Again!</button>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap" id="footer-text">Built on a local fine-tune of NLLB-200 — Amharic ⇄ Afan Oromo, 11.8k children's-education sentence pairs.</div>
+</footer>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
