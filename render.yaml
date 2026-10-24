@@ -5,12 +5,12 @@ services:
     runtime: python
     rootDir: render/fidel-cnn
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 server:app
     envVars:
       - key: FIDEL_MODEL_PATH
-        value: ../../fidelaifinal/models/fidel_cnn_inference1.pt
+        value: models/fidel_cnn_inference1.pt
       - key: FIDEL_CHARS_PATH
-        value: ../../fidelaifinal/models/chars.json
+        value: models/chars.json
     plan: free
 
   # ── Sign Language Translator ───────────────────────────────────────────────
@@ -19,5 +19,5 @@ services:
     runtime: python
     rootDir: render/sign-language
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
     plan: free
