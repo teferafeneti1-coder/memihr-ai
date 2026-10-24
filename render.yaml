@@ -5,10 +5,10 @@ services:
     runtime: python
     rootDir: render/fidel-cnn
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 server:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 --preload server:app
     envVars:
       - key: FIDEL_MODEL_PATH
-        value: models/fidel_cnn_inference1.pt
+        value: models/fidel_cnn.onnx
       - key: FIDEL_CHARS_PATH
         value: models/chars.json
     plan: free
