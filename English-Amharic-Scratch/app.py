@@ -161,8 +161,9 @@ state_dict = torch.load(MODEL_PT_PATH, map_location=DEVICE)
 model.load_state_dict(state_dict)
 model.eval()
 
-print(f"Loaded model on {DEVICE}. EN vocab={en_sp.get_piece_size()}, "
+print(f"✅ Model loaded on {DEVICE}. EN vocab={en_sp.get_piece_size()}, "
       f"AM vocab={am_sp.get_piece_size()}, test_bleu={CONFIG.get('test_bleu')}")
+print("🚀 Server ready to accept requests.")
 
 
 # --------------------------------------------------------------------------
