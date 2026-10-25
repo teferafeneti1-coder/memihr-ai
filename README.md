@@ -25,7 +25,6 @@ Real-time ASL word recognition running entirely in the browser. Uses MediaPipe h
 - **Stack:** FastAPI backend · MediaPipe · PyTorch MLP · kNN fusion · vanilla JS
 - **Features:** add custom gestures, retrain MLP live, parity self-test page
 - **Folder:** `signlanguagetranslate/`
-<img src="https://i.ibb.co/8gS9m83V/Gemini-Generated-Image-77rsxn77rsxn77rs-1.jpg" alt="Gemini Generated Image 77rsxn77rsxn77rs(1)" border="0">---
 
 ### 2. Fidel CNN
 Convolutional neural network that recognizes Ethiopic (Ge'ez / Fidel) script characters. Upload or draw a character and get the predicted label with confidence score.
