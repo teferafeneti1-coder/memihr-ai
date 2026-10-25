@@ -1,4 +1,4 @@
-# memihr — AI Projects
+<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/c3783b55-0942-4989-9af5-ba327271327f" /># memihr — AI Projects
 
 A collection of five AI projects built around Ethiopian languages, sign language translation, and script recognition. All five are live and publicly accessible.
 
@@ -25,7 +25,7 @@ Real-time ASL word recognition running entirely in the browser. Uses MediaPipe h
 - **Stack:** FastAPI backend · MediaPipe · PyTorch MLP · kNN fusion · vanilla JS
 - **Features:** add custom gestures, retrain MLP live, parity self-test page
 - **Folder:** `signlanguagetranslate/`
-
+https://i.ibb.co/8gS9m83V/Gemini-Generated-Image-77rsxn77rsxn77rs-1.jpg
 ---
 
 ### 2. Fidel CNN
