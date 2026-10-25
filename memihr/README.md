@@ -1,6 +1,6 @@
 # memihr — AI Projects
 
-A collection of five AI projects built around Ethiopian languages, sign language translation, and script recognition. Three are live and publicly accessible.
+A collection of five AI projects built around Ethiopian languages, sign language translation, and script recognition. All five are live and publicly accessible.
 
 ---
 
@@ -10,7 +10,9 @@ A collection of five AI projects built around Ethiopian languages, sign language
 |---|---|---|
 | 🤟 Sign Language Translator | [sign-language-yi6z.onrender.com](https://sign-language-yi6z.onrender.com) | Real-time ASL word recognition in the browser |
 | 🔤 Fidel CNN | [fidel-cnn.onrender.com](https://fidel-cnn.onrender.com) | Ethiopic (Ge'ez) script character recognition |
-| 🌐 Amharic→English Model | [fenetii/nllb-amharic-english-finetuned](https://huggingface.co/fenetii/nllb-amharic-english-finetuned) | Fine-tuned NLLB-600M translation model on Hugging Face |
+| 🌐 Amharic→English (Fine-tuned) | [fenetii/nllb-amharic-english-finetuned](https://huggingface.co/fenetii/nllb-amharic-english-finetuned) | Fine-tuned NLLB-600M translation model on Hugging Face |
+| 🇪🇹 English→Amharic (Scratch) | [english-amharic-scratch-memhirai.onrender.com](https://english-amharic-scratch-memhirai.onrender.com) | From-scratch Transformer translation app |
+| 🎬 Demo Video | [youtu.be/mt9Ag7MOpyg](https://youtu.be/mt9Ag7MOpyg) | Full walkthrough of all projects |
 
 ---
 
@@ -41,7 +43,7 @@ Convolutional neural network that recognizes Ethiopic (Ge'ez / Fidel) script cha
 - **Model:** [huggingface.co/fenetii/nllb-amharic-english-finetuned](https://huggingface.co/fenetii/nllb-amharic-english-finetuned)
 - **Stack:** HuggingFace Transformers · NLLB-200 · Seq2SeqTrainer · DDP
 - **Direction:** Amharic (`amh_Ethi`) → English (`eng_Latn`)
-- **Folder:** `Amharic-English-finetuned/` (outside this workspace)
+- **Folder:** `Amharic-English-finetuned/`
 
 ```python
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
@@ -57,12 +59,13 @@ print(tokenizer.decode(translated[0], skip_special_tokens=True))
 ---
 
 ### 4. English → Amharic (From Scratch)
-Encoder-decoder Transformer trained from random initialization — no pretrained weights, no pretrained tokenizer. Two SentencePiece BPE vocabularies (8k tokens each) trained directly on the corpus. Built to demonstrate a full NMT pipeline from the ground up.
+Encoder-decoder Transformer trained from random initialization — no pretrained weights, no pretrained tokenizer. Two SentencePiece BPE vocabularies (8k tokens each) trained directly on the corpus. Built to demonstrate a full NMT pipeline from the ground up. Features a language learning UI with lessons, quizzes, and sentence translation.
 
-- **Stack:** PyTorch Transformer · SentencePiece BPE · sacrebleu
+- **Live:** [english-amharic-scratch-memhirai.onrender.com](https://english-amharic-scratch-memhirai.onrender.com)
+- **Stack:** Flask · PyTorch Transformer · SentencePiece BPE · gunicorn · Render
 - **Direction:** English → Amharic
 - **Trained on:** Google Colab T4
-- **Folder:** `English-Amharic-Scratch/` (outside this workspace)
+- **Folder:** `English-Amharic-Scratch/`
 
 ---
 
@@ -85,6 +88,14 @@ cd memihr-ai
 ```
 
 See [`memihr-ai/README.md`](memihr-ai/README.md) for full dashboard documentation.
+
+---
+
+## Demo Video
+
+Full walkthrough of all five projects — sign language recognition, Fidel CNN, both translation apps, and the language learning UI.
+
+[![Demo Video](https://img.youtube.com/vi/mt9Ag7MOpyg/0.jpg)](https://youtu.be/mt9Ag7MOpyg)
 
 ---
 
