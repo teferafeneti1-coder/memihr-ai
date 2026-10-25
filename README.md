@@ -1,184 +1,113 @@
-# 🧠 memihr ai — Ethiopian AI Learning Suite
+# memihr — AI Projects
 
-An AI-powered learning platform for Ethiopian languages and sign language.
-Built for the **INSA Ethiopia AI Summer Camp 2026** 🇪🇹
-
----
-
-## 🌐 Live Model
-
-| Model | Link |
-|-------|------|
-| Adulis NLLB (Amharic ↔ Afan Oromo) | [huggingface.co/fenetii/adulis-nllb](https://huggingface.co/fenetii/adulis-nllb) |
+A collection of five AI projects built around Ethiopian languages, sign language translation, and script recognition. All five are live and publicly accessible.
 
 ---
 
-## 📦 Projects
+## Live Deployments
 
-### 1. ✍️ Fidel CNN Model Tester — port 5001
-Draw any handwritten Ethiopic (Fidel) character on a canvas — a CNN trained from scratch recognizes it from 287 classes. Supports user corrections and in-browser fine-tuning.
-
-- **Model**: Custom CNN (from scratch), 3× conv blocks, 287 classes
-- **Model size**: ~4 MB (included in repo)
-- **Location**: `fidelaifinal/`
-
-### 2. 🤟 Sign Language Translator — port 8000
-Real-time ASL word recognition from the webcam using MediaPipe hand landmarks + a custom MLP classifier trained in PyTorch.
-
-- **Model**: MediaPipe Hands + custom MLP (63 landmark features → ASL word classes)
-- **Model size**: ~1.4 MB (included in repo)
-- **Location**: `egate/signlanguagetranslate/`
-
-### 3. 📖 English-Amharic Scratch — port 5004
-English → Amharic translation with a Transformer built from scratch (no pretrained weights). Includes word bank, daily word, and quiz.
-
-- **Model**: Custom Transformer (from scratch), BLEU 9.54
-- **Model size**: ~52 MB (included in repo)
-- **Location**: `English-Amharic-Scratch/`
-
-### 4. 🌍 Adulis (Amharic ↔ Afan Oromo) — port 5003
-Bidirectional Amharic ↔ Afan Oromo translation, flashcards, quizzes and word bank using a fine-tuned NLLB model.
-
-- **Model**: Meta NLLB-200 fine-tuned on Amharic ↔ Afan Oromo corpus
-- **Model size**: 2.4 GB — **download from HF Hub** (see below)
-- **Location**: `oromifa-amharic & amharic-oromifa/adulis/`
-
-### 5. 🎓 Amharic-English Teaching Assistant — port 5002
-Amharic → English lessons, quizzes and free translation with a fine-tuned NLLB model and a background pre-warm system.
-
-- **Model**: Meta NLLB-200 fine-tuned on Amharic-English corpus
-- **Model size**: 2.4 GB — **download separately** (see below)
-- **Location**: `Amharic-English-finetuned/`
+| Project | URL | Description |
+|---|---|---|
+| 🤟 Sign Language Translator | [sign-language-yi6z.onrender.com](https://sign-language-yi6z.onrender.com) | Real-time ASL word recognition in the browser |
+| 🔤 Fidel CNN | [fidel-cnn.onrender.com](https://fidel-cnn.onrender.com) | Ethiopic (Ge'ez) script character recognition |
+| 🌐 Amharic→English (Fine-tuned) | [fenetii/nllb-amharic-english-finetuned](https://huggingface.co/fenetii/nllb-amharic-english-finetuned) | Fine-tuned NLLB-600M translation model on Hugging Face |
+| 🇪🇹 English→Amharic (Scratch) | [english-amharic-scratch-memhirai.onrender.com](https://english-amharic-scratch-memhirai.onrender.com) | From-scratch Transformer translation app |
+| 🎬 Demo Video | [youtu.be/mt9Ag7MOpyg](https://youtu.be/mt9Ag7MOpyg) | Full walkthrough of all projects |
 
 ---
 
-## 🚀 How to Run (Full Suite)
+## Projects
 
-### 1. Clone the repo
+### 1. Sign Language Translator
+Real-time ASL word recognition running entirely in the browser. Uses MediaPipe hand and pose landmarks, a pre-trained MLP, and a live kNN classifier. No server-side image processing — the camera never leaves the browser.
+
+- **Live:** [sign-language-yi6z.onrender.com](https://sign-language-yi6z.onrender.com)
+- **Stack:** FastAPI backend · MediaPipe · PyTorch MLP · kNN fusion · vanilla JS
+- **Features:** add custom gestures, retrain MLP live, parity self-test page
+- **Folder:** `signlanguagetranslate/`
+
+---
+
+### 2. Fidel CNN
+Convolutional neural network that recognizes Ethiopic (Ge'ez / Fidel) script characters. Upload or draw a character and get the predicted label with confidence score.
+
+- **Live:** [fidel-cnn.onrender.com](https://fidel-cnn.onrender.com)
+- **Stack:** Flask · PyTorch CNN · vanilla JS
+- **Folder:** `fidelaifinal/` (outside this workspace)
+
+---
+
+### 3. Amharic → English (Fine-tuned NLLB)
+`facebook/nllb-200-distilled-600M` fine-tuned on ~65k Amharic–English sentence pairs across six domains (Bible, JW daily quotes, news, legal, history). Trained on Kaggle with 2 × Tesla T4 GPUs using DDP.
+
+- **Model:** [huggingface.co/fenetii/nllb-amharic-english-finetuned](https://huggingface.co/fenetii/nllb-amharic-english-finetuned)
+- **Stack:** HuggingFace Transformers · NLLB-200 · Seq2SeqTrainer · DDP
+- **Direction:** Amharic (`amh_Ethi`) → English (`eng_Latn`)
+- **Folder:** `Amharic-English-finetuned/`
+
+```python
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+tokenizer = AutoTokenizer.from_pretrained("fenetii/nllb-amharic-english-finetuned", src_lang="amh_Ethi")
+model     = AutoModelForSeq2SeqLM.from_pretrained("fenetii/nllb-amharic-english-finetuned")
+
+inputs     = tokenizer("ሰላም ዓለም", return_tensors="pt")
+translated = model.generate(**inputs, forced_bos_token_id=tokenizer.convert_tokens_to_ids("eng_Latn"))
+print(tokenizer.decode(translated[0], skip_special_tokens=True))
+```
+
+---
+
+### 4. English → Amharic (From Scratch)
+Encoder-decoder Transformer trained from random initialization — no pretrained weights, no pretrained tokenizer. Two SentencePiece BPE vocabularies (8k tokens each) trained directly on the corpus. Built to demonstrate a full NMT pipeline from the ground up. Features a language learning UI with lessons, quizzes, and sentence translation.
+
+- **Live:** [english-amharic-scratch-memhirai.onrender.com](https://english-amharic-scratch-memhirai.onrender.com)
+- **Stack:** Flask · PyTorch Transformer · SentencePiece BPE · gunicorn · Render
+- **Direction:** English → Amharic
+- **Trained on:** Google Colab T4
+- **Folder:** `English-Amharic-Scratch/`
+
+---
+
+### 5. Adulis — Amharic ↔ Afan Oromo
+Translation assistant between Amharic and Afan Oromo using a fine-tuned NLLB model.
+
+- **Stack:** Flask · HuggingFace Transformers · NLLB
+- **Folder:** `oromifa-amharic & amharic-oromifa/adulis/` (outside this workspace)
+
+---
+
+## memihr-ai Dashboard
+
+A single-page dashboard that runs and manages all five projects locally. Handles process lifecycle, memory guarding, staggered startup, and log streaming.
+
 ```bash
-git clone https://github.com/fenetii/memihr-ai.git
 cd memihr-ai
-```
-
-### 2. Set up Python environment
-```bash
-python -m venv myenv
-source myenv/bin/activate
-pip install flask fastapi uvicorn torch transformers sentencepiece psutil requests pillow numpy
-```
-
-### 3. Download the large NLLB models
-
-**Adulis model** (2.4 GB):
-```bash
-# Option A — using huggingface_hub
-pip install huggingface_hub
-python -c "from huggingface_hub import snapshot_download; snapshot_download('fenetii/adulis-nllb', local_dir='oromifa-amharic & amharic-oromifa/archive')"
-
-# Option B — using hf CLI
-hf download fenetii/adulis-nllb --local-dir "oromifa-amharic & amharic-oromifa/archive"
-```
-
-**Amharic-English model** (2.4 GB):
-> ⚠️ This model is not yet publicly hosted. Contact the author or skip this project.
-> Place the model files in `Amharic-English-finetuned/archive/`
-
-### 4. Start the dashboard
-```bash
-cd egate/memihr-ai
 ./run.sh
+# open http://127.0.0.1:9000
 ```
 
-Then open **http://127.0.0.1:9000** in your browser.
-
-The dashboard automatically starts all projects in order (light apps first, heavy apps last). The memory guard will skip heavy projects if RAM is insufficient.
-
-### 5. Or run any project individually
-```bash
-# Fidel CNN
-cd fidelaifinal && python app.py
-
-# Sign Language
-cd egate/signlanguagetranslate/backend && python app.py
-
-# English-Amharic Scratch
-cd English-Amharic-Scratch && python app.py
-
-# Adulis (set MODEL_PATH first)
-MODEL_PATH="oromifa-amharic & amharic-oromifa/archive" python app.py
-
-# Amharic-English
-cd Amharic-English-finetuned && python app.py
-```
+See [`memihr-ai/README.md`](memihr-ai/README.md) for full dashboard documentation.
 
 ---
 
-## 🤖 AI Models Summary
+## Demo Video
 
-| Project | Model Type | Trained | Size |
-|---------|-----------|---------|------|
-| Fidel CNN | CNN from scratch | Custom dataset, 287 Ethiopic chars | 4 MB |
-| Sign Language | MLP on MediaPipe landmarks | ASL gestures | 1.4 MB |
-| English-Amharic Scratch | Transformer from scratch | BLEU 9.54 | 52 MB |
-| Adulis | NLLB-200 fine-tuned | Amharic ↔ Afan Oromo corpus | 2.4 GB |
-| Amharic-English | NLLB-200 fine-tuned | Amharic-English corpus | 2.4 GB |
+Full walkthrough of all five projects — sign language recognition, Fidel CNN, both translation apps, and the language learning UI.
 
-**All models run locally on CPU — zero cloud API cost.**
+[![Demo Video](https://img.youtube.com/vi/mt9Ag7MOpyg/0.jpg)](https://youtu.be/mt9Ag7MOpyg)
 
 ---
 
-## 🏗️ Architecture
+## Notebooks
 
-```
-memihr-ai/
-  egate/
-    memihr-ai/          ← Dashboard (FastAPI, port 9000)
-    signlanguagetranslate/ ← Sign Language (FastAPI, port 8000)
-  fidelaifinal/         ← Fidel CNN (Flask, port 5001)
-  English-Amharic-Scratch/ ← Scratch Transformer (Flask, port 5004)
-  oromifa-amharic & amharic-oromifa/
-    adulis/             ← Adulis (Flask, port 5003)
-  Amharic-English-finetuned/ ← Teaching Assistant (Flask, port 5002)
-  hf-spaces/            ← Hugging Face deployment files
-```
+Training notebooks are in `ipynb for all/`:
 
-The **memihr-ai dashboard** starts all projects via a subprocess launcher that:
-- Overrides each Flask app's port without editing project files
-- Disables debug/reloader (prevents double model loading)
-- Gives each app a unique session cookie name
-- Applies a memory guard before starting heavy models
-
----
-
-## 📋 Requirements
-
-- Python 3.10+
-- 8+ GB RAM recommended (16 GB for all 5 projects simultaneously)
-- CPU only (no GPU required)
-- Linux / macOS
-
----
-
-## 📁 What's NOT in this repo
-
-| File | Why excluded | Where to get it |
-|------|-------------|-----------------|
-| `oromifa-amharic*/archive/` | 2.4 GB NLLB model | [huggingface.co/fenetii/adulis-nllb](https://huggingface.co/fenetii/adulis-nllb) |
-| `Amharic-English-finetuned/archive/` | 2.4 GB NLLB model | Contact author |
-| `fidelaifinal/corrections/` | Runtime output | Generated when you use the app |
-| `*/models/mlp_versions/` | Trained checkpoints | Generated when you train |
-
----
-
-## 👤 Author
-
-**Feneti Tefera**
-INSA Ethiopia AI Summer Camp 2026
-GitHub: [@fenetii](https://github.com/fenetii)
-HuggingFace: [@fenetii](https://huggingface.co/fenetii)
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
+| Notebook | Description |
+|---|---|
+| `amharic-englishfinetuned.ipynb` | NLLB fine-tuning on Kaggle (2× T4, DDP) |
+| `english_to_amharic_from_scratch_colab(1)(1).ipynb` | Full NMT pipeline from scratch on Colab |
+| `afanoromo-amharic(1).ipynb` | Afan Oromo ↔ Amharic training |
+| `cnnfidel.ipynb` | Fidel CNN training |
+| `finetuned.ipynb` | Earlier fine-tuning experiments |
+| `signlanguagetransator.ipynb` | Sign language model experiments |
