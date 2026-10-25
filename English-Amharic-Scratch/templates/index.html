@@ -699,7 +699,7 @@ textarea.tr-input::placeholder { color: #aac4ae; }
 
     <div class="sec-card">
       <div class="sec-title">Free Translation <span class="am">/ ነጻ ትርጉም</span></div>
-      <div class="sec-desc">Type any English sentence and the AI translates it to Amharic. / ማንኛውንም እንግሊዝኛ ዓረፍተ ነገር ጻፍ — AI ወደ አማርኛ ይተረጉምልሃል።</div>
+      <div class="sec-desc">Pick a sentence below or type your own — the AI translates it to Amharic. Best with full sentences! / ከታቹ ዓረፍተ ነገር ምረጥ ወይም ጻፍ — AI ወደ አማርኛ ይተረጉምልሃል። ሙሉ ዓረፍተ ነገር የተሻለ ነው!</div>
 
       <!-- Quick word chips (top 3 categories) -->
       <div style="margin-bottom:10px;">
@@ -1079,8 +1079,68 @@ document.getElementById("skip-q-btn").addEventListener("click", () => {
 /* ─────────────────────────────────────
    TRANSLATE
 ──────────────────────────────────────*/
+// Sentence suggestions grouped by topic
+const SENTENCE_BANK = {
+  "🐾 Animals": [
+    "The lion is very strong.",
+    "A dog is a loyal friend.",
+    "The bird sings in the morning.",
+    "My cat drinks milk every day.",
+    "The elephant is the largest animal.",
+  ],
+  "🍎 Food": [
+    "I eat bread every morning.",
+    "Water is very important for life.",
+    "The mango is sweet and delicious.",
+    "We drink milk to stay healthy.",
+    "Honey tastes very sweet.",
+  ],
+  "👨‍👩‍👧 Family": [
+    "My mother is very kind.",
+    "My father works hard every day.",
+    "My sister and I go to school.",
+    "The family eats together at night.",
+    "I love my grandmother very much.",
+  ],
+  "😊 Feelings": [
+    "I am very happy today.",
+    "The child is tired after school.",
+    "She feels sad when it rains.",
+    "We are excited about the holiday.",
+    "He is angry because he lost.",
+  ],
+  "🌍 Greetings": [
+    "Hello, how are you today?",
+    "Thank you for your help.",
+    "Good morning, have a nice day.",
+    "I am sorry for the mistake.",
+    "Welcome to our home.",
+  ],
+  "📚 School": [
+    "I love reading books at school.",
+    "The teacher is kind and smart.",
+    "Students learn new words every day.",
+    "This book is very interesting.",
+    "We write and read in class.",
+  ],
+  "🌦️ Nature": [
+    "The sun is bright and warm.",
+    "It rains a lot in Ethiopia.",
+    "The river flows to the sea.",
+    "The tree gives us fresh air.",
+    "The sky is clear and blue.",
+  ],
+  "🏃 Actions": [
+    "The children run in the field.",
+    "We sing and dance at the festival.",
+    "She cooks dinner for her family.",
+    "He prays every morning and evening.",
+    "They play football after school.",
+  ],
+};
+
 function initTranslate() {
-  const cats   = Object.keys(wordBank).slice(0, 4);
+  const cats   = Object.keys(SENTENCE_BANK);
   const catRow = document.getElementById("tr-cat-row");
   catRow.innerHTML = "";
 
@@ -1102,18 +1162,18 @@ function initTranslate() {
 function renderTrChips(cat) {
   const chips = document.getElementById("tr-chips");
   chips.innerHTML = "";
-  (wordBank[cat] || []).forEach(w => {
+  (SENTENCE_BANK[cat] || []).forEach(sentence => {
     const btn = document.createElement("button");
     btn.className = "tr-chip";
-    btn.innerHTML = `${w.en} <span class="chip-am">${w.am}</span>`;
-    btn.title     = `${w.en} = ${w.am}`;
+    btn.innerHTML = `<span style="font-size:.82rem">💬 ${sentence}</span>`;
+    btn.title     = sentence;
     btn.addEventListener("click", () => {
       const inp = document.getElementById("tr-input");
-      const v   = inp.value.trimEnd();
-      inp.value = v + (v && !v.endsWith(" ") ? " " : "") + w.en;
+      inp.value = sentence;
       updateTrChar();
       inp.focus();
       hideTrMsg();
+      document.getElementById("tr-result").classList.remove("visible");
     });
     chips.appendChild(btn);
   });
@@ -1185,7 +1245,7 @@ async function doTranslate() {
       addScore(3);
     }
   } catch {
-    showTrMsg("🖥️ Server not reachable / አገልጋዩ አይደርስም።");
+    showTrMsg("⏳ Server is waking up — please wait 30 seconds and try again. / አገልጋዩ እየነቃ ነው — 30 ሰከንድ ጠብቅ እና እንደገና ሞክር።", "hint");
   } finally {
     btn.disabled = false;
     btn.innerHTML = "🌍 Translate / ተርጉም";
