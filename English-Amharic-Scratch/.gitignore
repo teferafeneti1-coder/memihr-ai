@@ -6,3 +6,6 @@ __pycache__/
 *.ipynb
 Untitled-1
 .DS_Store
+model/model.pt
+export_numpy.py
+export_onnx.py
